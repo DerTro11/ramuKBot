@@ -7,8 +7,8 @@ interface Command {
 }
 
 
-interface EventHandler {
-    on?: () => void | Promise<void>,
-    once?: () => void | Promise<void>,
-    off: () => void | Promise<void>
+interface EventHandler<T = any> {
+    on?: (data: T) => void | Promise<void>,
+    once?: (data: T) => void | Promise<void>,
+    off?: (data: T) => void | Promise<void>
 }
