@@ -1,4 +1,6 @@
 import {Client, IntentsBitField, Partials} from "discord.js";
+import {readdirSync} from "node:fs";
+import {EventHandler} from "types";
 
 require('dotenv').config();
 
@@ -10,6 +12,8 @@ const clnt = new Client({
 clnt.on("ready", function(){
     console.log(`Bot ${clnt.user?.tag} is ready`)
 })
+
+let eventFiles = readdirSync("./src/events");
 
 
 
