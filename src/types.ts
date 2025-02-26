@@ -1,14 +1,16 @@
-import { CommandInteraction, SlashCommandBuilder } from "discord.js"
+import { CommandInteraction, SlashCommandBuilder, ClientEvents } from "discord.js"
 
 
-interface Command {
+export interface Command {
     CommandBody:  SlashCommandBuilder,
     execute: (Interaction: CommandInteraction) => void | Promise<void>
 }
 
+type EventName = keyof ClientEvents;
 
-interface EventHandler<T = any> {
-    on?: (data: T) => void | Promise<void>,
-    once?: (data: T) => void | Promise<void>,
-    off?: (data: T) => void | Promise<void>
+export interface EventHandler<Event extends EventName> {
+    on?: (...args: ClientEvents[Event]) => void | Promise<void>,
+    once?: (...args: ClientEvents[Event]) => void | Promise<void>,
+    off?: (...args: ClientEvents[Event]) => void | Promise<void>
 }
+
