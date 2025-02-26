@@ -11,4 +11,6 @@ clnt.on("ready", function(){
     console.log(`Bot ${clnt.user?.tag} is ready`)
 })
 
+
+
 clnt.login(process.env.DCToken);
