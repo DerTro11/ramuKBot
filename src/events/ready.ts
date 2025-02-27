@@ -1,9 +1,9 @@
 import {EventHandler} from "../types";
 
-const ReadyEventHandler : EventHandler<"ready"> = {
+const Handler : EventHandler<"ready"> = {
     on(client) {
         console.log(`bot ${client.user?.tag} is ready`)
     }
 } 
 
-export default ReadyEventHandler;
+export default Handler;

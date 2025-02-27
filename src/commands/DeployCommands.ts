@@ -22,7 +22,7 @@ function LoadCMDs() : RESTPostAPIApplicationCommandsJSONBody[]{
 
         CommandFiles.forEach((FileName) =>{
             try{
-                const command : Command = require(`./${CommandDir}/${FileName}`).default
+                const command : Command = require(`./${CommandDir}/${FileName}`).Cmd
                 if (!command.CommandBody) throw Error("Command body is missing!");
 
                 Commands.push( command.CommandBody.toJSON() ) 

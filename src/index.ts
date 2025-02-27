@@ -1,7 +1,7 @@
 import {Client, IntentsBitField, Partials} from "discord.js";
 import {readdirSync} from "node:fs";
 import {EventHandler} from "types";
-
+import {DeployCommands} from './commands/DeployCommands';
 
 require('dotenv').config();
 
@@ -21,5 +21,5 @@ for (let index = 0; index < eventFiles.length; index++) {
  if(eventFile.off) clnt.off(EventName, eventFile.off); 
 }
 
-
+DeployCommands()
 clnt.login(process.env.DCToken);
