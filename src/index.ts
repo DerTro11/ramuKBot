@@ -21,5 +21,5 @@ for (let index = 0; index < eventFiles.length; index++) {
  if(eventFile.off) clnt.off(EventName, eventFile.off); 
 }
 
-DeployCommands()
+
 clnt.login(process.env.DCToken);
