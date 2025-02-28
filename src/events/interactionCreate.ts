@@ -22,7 +22,7 @@ function FindCommandByName(CommandName : string) : Command | undefined{
 
 const Handler : EventHandler<"interactionCreate"> = {
     on(interaction) {
-        if(interaction.type === InteractionType.ApplicationCommand){
+        if(interaction.type === InteractionType.ApplicationCommand && interaction.isChatInputCommand()){
             const command = FindCommandByName(interaction.commandName);
             command?.execute(interaction as ChatInputCommandInteraction);
         }
