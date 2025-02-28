@@ -1,9 +1,9 @@
-import { CommandInteraction, SlashCommandBuilder, ClientEvents } from "discord.js"
+import { CommandInteraction, SlashCommandBuilder, ClientEvents, ChatInputCommandInteraction } from "discord.js"
 
 
 export interface Command {
     CommandBody:  SlashCommandBuilder,
-    execute: (Interaction: CommandInteraction) => void | Promise<void>
+    execute: (Interaction: ChatInputCommandInteraction) => void | Promise<void>
 }
 
 type EventName = keyof ClientEvents;

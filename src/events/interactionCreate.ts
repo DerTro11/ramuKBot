@@ -1,4 +1,4 @@
-import { InteractionType } from "discord.js";
+import { InteractionType, ChatInputCommandInteraction, CommandInteraction } from "discord.js";
 import {Command, EventHandler} from "../types";
 import { readdirSync } from "fs";
 
@@ -24,7 +24,7 @@ const Handler : EventHandler<"interactionCreate"> = {
     on(interaction) {
         if(interaction.type === InteractionType.ApplicationCommand){
             const command = FindCommandByName(interaction.commandName);
-            command?.execute(interaction);
+            command?.execute(interaction as ChatInputCommandInteraction);
         }
     },
 } 
