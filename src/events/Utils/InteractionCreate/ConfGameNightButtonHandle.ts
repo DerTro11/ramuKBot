@@ -1,5 +1,6 @@
 import { ButtonInteraction, GuildScheduledEventCreateOptions, TextChannel, ButtonBuilder, ActionRowBuilder, ButtonStyle } from "discord.js";
 import GameNight from "MongoDB/models/GameNight";
+import AppConfig from "AppConfig";
 
 
 export default async function HandleInteraction(interaction : ButtonInteraction) {
@@ -42,7 +43,7 @@ async function handleGameNightConfirmation(interaction: ButtonInteraction) {
             privacyLevel: 2, // Guild Only
             entityType: 2, // Voice Event
             description: additionalInfo,
-            channel: "YOUR_VOICE_CHANNEL_ID" // Replace with actual voice channel ID
+            channel: AppConfig.GameNightVCId // Replace with actual voice channel ID
         } as GuildScheduledEventCreateOptions);
 
         // Save to MongoDB
@@ -63,7 +64,7 @@ async function handleGameNightConfirmation(interaction: ButtonInteraction) {
         await gameNight.save();
 
         // Announce in predefined text channel
-        const announcementChannel = interaction.guild.channels.cache.get("YOUR_TEXT_CHANNEL_ID") as TextChannel; // Replace with actual channel ID
+        const announcementChannel = interaction.guild.channels.cache.get(AppConfig.GameNightAnnoucmentChnlId) as TextChannel; // Replace with actual channel ID
         if (announcementChannel) {
             const acceptButton = new ButtonBuilder()
                 .setCustomId(`accept_${serverEvent.id}`)
