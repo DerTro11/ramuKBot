@@ -22,8 +22,8 @@ async function handleGameNightConfirmation(interaction: ButtonInteraction) {
     }
 
     // Retrieve event details from the original message
-    const [gameLine, dateLine, infoLine] = interaction.message.content.split("\n").filter(line => line.includes("**"));
-    const game = gameLine.split("**")[2].trim();
+    const [ , dateLine, gameinfo, infoLine] = interaction.message.content.split("\n").filter(line => line.includes("**"));
+    const game = gameinfo.split("**")[2].trim();
     const timestampMatch = dateLine.match(/<t:(\d+):F>/);
     if (!timestampMatch) {
         await interaction.reply({ content: "Error parsing event date.", ephemeral: true });

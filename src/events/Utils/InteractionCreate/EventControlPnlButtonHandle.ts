@@ -1,32 +1,35 @@
-import { ButtonInteraction, EmbedBuilder, GuildMember, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, ModalSubmitInteraction  } from "discord.js";
+import { ButtonInteraction, EmbedBuilder, GuildMember, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, ModalSubmitInteraction, GuildScheduledEventStatus  } from "discord.js";
 import EventSchema from "../../../MongoDB/models/GameNight"; // Import MongoDB schema
+import {GnEventData, GnEventStatus} from "../../../types";
 
 export default async function handleHostControls(interaction: ButtonInteraction) {
-    const [action, , eventId] = interaction.customId.split("_");
-    const EventData = await EventSchema.findOne({ EventId: parseInt(eventId) });
+    const EventId = interaction.customId.split("_")[2];
+    const EventData : GnEventData | null = await EventSchema.findOne({ EventId });
 
     if (!EventData) {
-        return interaction.reply({ content: "⚠️ Event not found.", ephemeral: true });
+        interaction.reply({ content: "⚠️ Event not found.", ephemeral: true });
+        return;
     }
 
     if (EventData.HostDCId !== interaction.user.id) {
-        return interaction.reply({ content: "🚫 You are not the host of this event.", ephemeral: true });
+        interaction.reply({ content: "🚫 You are not the host of this event.", ephemeral: true });
+        return;
     }
 
     
     if (interaction.customId.startsWith("event_cancel"))  cancelEvent(interaction, EventData);
-    else if (interaction.customId.startsWith("event_change_game"))  changeGame(interaction, EventData);
+    else if (interaction.customId.startsWith("event_changegame"))  changeGame(interaction, EventData);
     else if (interaction.customId.startsWith("event_mute"))  muteVC(interaction, EventData);
     else if (interaction.customId.startsWith("event_end"))  endEvent(interaction, EventData);
     
 }
 
-async function cancelEvent(interaction: ButtonInteraction, EventData: any) {
+async function cancelEvent(interaction: ButtonInteraction, EventData: GnEventData) {
     await EventSchema.deleteOne({ EventId: EventData.EventId });
 
     // Attempt to remove the Discord event
     const guild = interaction.guild;
-    const discordEvent = guild?.scheduledEvents.cache.get(EventData.ServeEventID);
+    const discordEvent = guild?.scheduledEvents.cache.get(EventData.ServerEventID);
     if (discordEvent) await discordEvent.delete();
 
     // Notify users who accepted
@@ -39,7 +42,7 @@ async function cancelEvent(interaction: ButtonInteraction, EventData: any) {
     await interaction.reply({ content: "✅ Event cancelled successfully.", ephemeral: true });
 }
 
-async function changeGame(interaction: ButtonInteraction, EventData: any) {
+async function changeGame(interaction: ButtonInteraction, EventData: GnEventData) {
     const modal = new ModalBuilder()
         .setCustomId(`changeGameModal_${EventData.EventId}`)
         .setTitle("Change Game Information");
@@ -62,20 +65,25 @@ async function changeGame(interaction: ButtonInteraction, EventData: any) {
 async function handleModalSubmission(interaction: ModalSubmitInteraction) {
     if (!interaction.customId.startsWith("changeGameModal_")) return;
 
-    const eventId = interaction.customId.split("_")[1];
+    const EventId = interaction.customId.split("_")[1];
     const newGame = interaction.fields.getTextInputValue("newGameName");
-
+    const ServerEvent = interaction.guild?.scheduledEvents.cache.get(EventId);
+  
     // Update the database
-    await EventSchema.updateOne({ EventId: parseInt(eventId) }, { $set: { InfGame: newGame } });
+    await EventSchema.updateOne({ EventId }, { $set: { InfGame: newGame } });
+    ServerEvent?.setName(`Game Night - ${newGame} 🎮`);
+    
 
     await interaction.reply({ content: `✅ Game updated to **${newGame}**.`, ephemeral: true });
 }
 
-async function muteVC(interaction: ButtonInteraction, EventData: any) {
+async function muteVC(interaction: ButtonInteraction, EventData: GnEventData) {
     const guild = interaction.guild;
     if (!guild) return interaction.reply({ content: "⚠️ Guild not found.", ephemeral: true });
+    const EventVoiceChannel = guild?.scheduledEvents.cache.get(EventData.ServerEventID)?.channel?.id;
 
-    const voiceChannel = guild.channels.cache.find(c => c.id === EventData.VoiceChannelID);
+
+    const voiceChannel = guild.channels.cache.find(c => c.id === EventVoiceChannel);
     if (!voiceChannel || !voiceChannel.isVoiceBased()) {
         return interaction.reply({ content: "⚠️ Voice channel not found.", ephemeral: true });
     }
@@ -89,11 +97,11 @@ async function muteVC(interaction: ButtonInteraction, EventData: any) {
     await interaction.reply({ content: "🔇 All members in the event VC have been muted.", ephemeral: true });
 }
 
-async function endEvent(interaction: ButtonInteraction, EventData: any) {
+async function endEvent(interaction: ButtonInteraction, EventData: GnEventData) {
     await EventSchema.deleteOne({ EventId: EventData.EventId });
 
     const guild = interaction.guild;
-    const discordEvent = guild?.scheduledEvents.cache.get(EventData.ServeEventID);
+    const discordEvent = guild?.scheduledEvents.cache.get(EventData.ServerEventID);
     if (discordEvent) await discordEvent.delete();
 
     await interaction.reply({ content: "✅ Event ended and removed.", ephemeral: true });

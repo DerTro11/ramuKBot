@@ -14,7 +14,7 @@ const GameNightSchema = new mongoose.Schema({
     },
     Status: {
         type: String,
-        enum: ["Scheduled", "Cancelled", "Completed"],
+        enum: ["Scheduled", "Cancelled", "Completed", "Active"],
         default: "Scheduled"
     }
 }, { timestamps: true });

@@ -20,6 +20,10 @@ async function handleRSVP(interaction: ButtonInteraction, action: string, eventI
             await interaction.reply({ content: "This event no longer exists.", ephemeral: true });
             return;
         }
+        if(event.Status == "Completed" || event.Status == "Cancelled"){
+            await interaction.reply({ content: "This event was already completed or cancelled.", ephemeral: true });
+            return;
+        }
 
         const userId = interaction.user.id;
         if(!event || !event.ReactedUsers) return;

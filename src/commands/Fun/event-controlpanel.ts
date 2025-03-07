@@ -5,6 +5,7 @@ import EventSchema from "../../MongoDB/models/GameNight"; // Import your MongoDB
 const CommandBody = new SlashCommandBuilder()
     .setName("event-controlpanel")
     .setDescription("Opens the event control panel for the host")
+    .setContexts([0])
     .addStringOption(option =>
         option.setName("event_id")
             .setDescription("The ID of the event you want to control")
@@ -37,7 +38,7 @@ export const Cmd: Command = {
                     .setStyle(ButtonStyle.Danger),
 
                 new ButtonBuilder()
-                    .setCustomId(`event_change_game_${EventId}`)
+                    .setCustomId(`event_changegame_${EventId}`)
                     .setLabel("Change Game Info")
                     .setStyle(ButtonStyle.Primary),
                     new ButtonBuilder()
