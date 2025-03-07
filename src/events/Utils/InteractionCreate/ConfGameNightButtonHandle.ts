@@ -1,6 +1,6 @@
 import { ButtonInteraction, GuildScheduledEventCreateOptions, TextChannel, ButtonBuilder, ActionRowBuilder, ButtonStyle } from "discord.js";
-import GameNight from "MongoDB/models/GameNight";
-import AppConfig from "AppConfig";
+import AppConfig from "../../../AppConfig";
+import GameNight from "../../../MongoDB/models/GameNight";
 
 
 export default async function HandleInteraction(interaction : ButtonInteraction) {
@@ -53,7 +53,7 @@ async function handleGameNightConfirmation(interaction: ButtonInteraction) {
             ServerEventID: serverEvent.id,
             InfGame: game,
             InfAdditional: additionalInfo,
-            Date: eventDate,
+            ScheduledAt: eventDate,
             ReactedUsers: {
                 Users_Accept: [],
                 Users_Unsure: [],

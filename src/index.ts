@@ -2,7 +2,8 @@ import {Client, IntentsBitField, Partials} from "discord.js";
 import {readdirSync} from "node:fs";
 import {EventHandler} from "types";
 import {DeployCommands} from './commands/DeployCommands';
-import AppConfig from "AppConfig";
+import AppConfig from "./AppConfig";
+import DBConnect from "./MongoDB/Database";
 
 
 require('dotenv').config();
@@ -25,4 +26,5 @@ for (let index = 0; index < eventFiles.length; index++) {
 }
 
 if(AppConfig.UpdateSlashCMDsOnRun) DeployCommands();
+DBConnect();
 clnt.login(process.env.DCToken);

@@ -5,7 +5,7 @@ import {Command, EventHandler} from "../types";
 import HandleCommand from "./Utils/InteractionCreate/HandleCommand";
 import HandleConfGameNightButton from "./Utils/InteractionCreate/ConfGameNightButtonHandle";
 import HandleRSVPButton from "./Utils/InteractionCreate/GNRSVPButtonHandler";
-
+import HandleHostCntrlButton from "./Utils/InteractionCreate/EventControlPnlButtonHandle";
 
 const Handler : EventHandler<"interactionCreate"> = {
     on(interaction) {
@@ -15,6 +15,9 @@ const Handler : EventHandler<"interactionCreate"> = {
         }
         else if(interaction.isButton() && interaction.customId.endsWith("gamenight")){
             HandleConfGameNightButton(interaction);
+        }
+        else if(interaction.isButton() && interaction.customId.startsWith("event")){
+            HandleHostCntrlButton(interaction);
         }
         else if(interaction.isButton() && interaction.customId.match(/(accept|unsure|decline)_(\d+)/)){
             HandleRSVPButton(interaction);

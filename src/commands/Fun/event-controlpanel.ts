@@ -1,11 +1,11 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 import { Command } from "types";
-import EventSchema from "MongoDB/models/GameNight"; // Import your MongoDB schema
+import EventSchema from "../../MongoDB/models/GameNight"; // Import your MongoDB schema
 
 const CommandBody = new SlashCommandBuilder()
     .setName("event-controlpanel")
     .setDescription("Opens the event control panel for the host")
-    .addIntegerOption(option =>
+    .addStringOption(option =>
         option.setName("event_id")
             .setDescription("The ID of the event you want to control")
             .setRequired(true)
@@ -14,7 +14,7 @@ const CommandBody = new SlashCommandBuilder()
 export const Cmd: Command = {
     CommandBody: CommandBody,
     async execute(Interaction) {
-        const EventId = Interaction.options.getInteger("event_id", true);
+        const EventId = Interaction.options.getString("event_id", true);
         const EventData = await EventSchema.findOne({ EventId });
 
         if (!EventData) {

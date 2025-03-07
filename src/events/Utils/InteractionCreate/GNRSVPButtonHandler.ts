@@ -1,5 +1,5 @@
 import { ButtonInteraction, Events } from "discord.js";
-import GameNightModel from "MongoDB/models/GameNight";
+import GameNightModel from "../../../MongoDB/models/GameNight";
 
 
 export default async function HandleRSVP(interaction : ButtonInteraction) {
@@ -22,7 +22,7 @@ async function handleRSVP(interaction: ButtonInteraction, action: string, eventI
         }
 
         const userId = interaction.user.id;
-
+        if(!event || !event.ReactedUsers) return;
         // Remove user from all RSVP lists to ensure they only belong to one
         event.ReactedUsers.Users_Accept = event.ReactedUsers.Users_Accept.filter(id => id !== userId);
         event.ReactedUsers.Users_Unsure = event.ReactedUsers.Users_Unsure.filter(id => id !== userId);
