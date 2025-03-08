@@ -1,43 +1,41 @@
-import { GuildScheduledEventStatus, ButtonInteraction, TextChannel, EmbedBuilder } from "discord.js";
+import { GuildScheduledEventStatus, ButtonInteraction, TextChannel, EmbedBuilder, Client } from "discord.js";
 import EventSchema from "../MongoDB/models/GameNight"; // Import your event schema
 import { GnEventData, GnEventStatus } from "types";
+import AppConf from "AppConfig";
 
-
-async function startEvent(EventId: string) {
-    const guild = interaction.guild;
-    if (!guild) return interaction.reply({ content: "❌ Error: Guild not found.", ephemeral: true });
-
+async function startEvent(EventId: string, client : Client) : Promise<void> {
     // Get event data from the database
-    const eventId = EventData.EventId;
-    const storedEvent = await EventSchema.findOne({ EventId: eventId });
-    if (!storedEvent) return interaction.reply({ content: "❌ Error: Event not found in the database.", ephemeral: true });
+    const storedEvent : GnEventData = await EventSchema.findOne({ EventId }) as GnEventData ;
+    if(!storedEvent) throw Error(`Failed to start event: Event ${EventId} does not excist!`);
+
 
     // Notify accepted users
-    const acceptedUsers = storedEvent.ReactedUsers.Users_Accept;
-    const eventLink = `https://discord.com/events/${guild.id}/${storedEvent.ServeEventID}`;
+    const acceptedUsers = storedEvent?.ReactedUsers?.Users_Accept;
+    const eventLink = `https://discord.com/events/${AppConf.MainGuild}/${storedEvent.ServerEventID}`;
+    const mainGuild = await client.guilds.fetch(AppConf.MainGuild);
 
     const notificationMessage = `🎉 **Game Night is Starting!** 🎮\nJoin now: [Event Link](${eventLink})`;
 
     for (const userId of acceptedUsers) {
         try {
-            const user = await interaction.client.users.fetch(userId);
+            const user = await client.users.fetch(userId);
             await user.send(notificationMessage);
         } catch (err) {
             console.error(`Failed to send DM to ${userId}:`, err);
         }
     }
 
+    await EventSchema.updateOne({ EventId }, { $set: {Status: GnEventStatus.Active} });
+
     // Start the Server Event
     try {
-        const serverEvent = await guild.scheduledEvents.fetch(storedEvent.ServeEventID);
+        const serverEvent = await mainGuild.scheduledEvents.fetch(storedEvent.ServerEventID);
         if (!serverEvent) throw new Error("Server event not found.");
         
         await serverEvent.setStatus(GuildScheduledEventStatus.Active);
 
-        await interaction.reply({ content: "✅ The event has started!", ephemeral: true });
-
         // Announce event start in the predefined channel
-        const announcementChannel = guild.channels.cache.get("YOUR_ANNOUNCEMENT_CHANNEL_ID") as TextChannel;
+        const announcementChannel = mainGuild.channels.cache.get(AppConf.GameNightVCId) as TextChannel;
         if (announcementChannel) {
             const embed = new EmbedBuilder()
                 .setTitle("🎮 Game Night Started!")
@@ -48,6 +46,5 @@ async function startEvent(EventId: string) {
         }
     } catch (err) {
         console.error("Error starting the event:", err);
-        await interaction.reply({ content: "❌ Failed to start the event.", ephemeral: true });
     }
 }
