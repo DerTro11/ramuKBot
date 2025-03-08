@@ -3,7 +3,7 @@ import EventSchema from "../MongoDB/models/GameNight"; // Import your event sche
 import { GnEventData, GnEventStatus } from "types";
 import AppConf from "AppConfig";
 
-async function startEvent(EventId: string, client : Client) : Promise<void> {
+export async function startEvent(EventId: string, client : Client) : Promise<void> {
     // Get event data from the database
     const storedEvent : GnEventData = await EventSchema.findOne({ EventId }) as GnEventData ;
     if(!storedEvent) throw Error(`Failed to start event: Event ${EventId} does not excist!`);
