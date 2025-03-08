@@ -17,6 +17,6 @@ const GameNightSchema = new mongoose.Schema({
         enum: ["Scheduled", "Cancelled", "Completed", "Active"],
         default: "Scheduled"
     }
-}, { timestamps: true });
+}, { timestamps: true, collection: "StoredEvents" });
 
 export default  mongoose.model("GameNightEvent", GameNightSchema);

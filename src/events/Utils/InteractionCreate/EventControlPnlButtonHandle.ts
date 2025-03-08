@@ -15,7 +15,7 @@ export default async function handleHostControls(interaction: ButtonInteraction)
         interaction.reply({ content: "🚫 You are not the host of this event.", ephemeral: true });
         return;
     }
-
+    
     
     if (interaction.customId.startsWith("event_cancel"))  cancelEvent(interaction, EventData);
     else if (interaction.customId.startsWith("event_changegame"))  changeGame(interaction, EventData);
@@ -50,11 +50,23 @@ async function changeGame(interaction: ButtonInteraction, EventData: GnEventData
     const gameInput = new TextInputBuilder()
         .setCustomId("newGameName")
         .setLabel("Enter the new game name:")
-        .setStyle(TextInputStyle.Short)
-        .setRequired(true);
+        .setRequired(false)
+        .setStyle(TextInputStyle.Short);
+    const descInput = new TextInputBuilder()
+        .setCustomId("newEventDesc")
+        .setLabel("Enter additional information:")
+        .setRequired(false)
+        .setStyle(TextInputStyle.Paragraph);
+    const dateInput = new TextInputBuilder()
+        .setCustomId("newDate")
+        .setLabel("New date (Please use YYYY-MM-DD HH:MM UTC):")
+        .setRequired(false)
+        .setStyle(TextInputStyle.Short);
 
-    const actionRow = new ActionRowBuilder<TextInputBuilder>().addComponents(gameInput);
-    modal.addComponents(actionRow);
+    const actionRow1 = new ActionRowBuilder<TextInputBuilder>().addComponents(gameInput);
+    const actionRow2 = new ActionRowBuilder<TextInputBuilder>().addComponents(descInput);
+    const actionRow3 = new ActionRowBuilder<TextInputBuilder>().addComponents(dateInput);
+    modal.addComponents(actionRow1, actionRow2, actionRow3);
 
     await interaction.showModal(modal);
 
@@ -66,15 +78,50 @@ async function handleModalSubmission(interaction: ModalSubmitInteraction) {
     if (!interaction.customId.startsWith("changeGameModal_")) return;
 
     const EventId = interaction.customId.split("_")[1];
-    const newGame = interaction.fields.getTextInputValue("newGameName");
     const ServerEvent = interaction.guild?.scheduledEvents.cache.get(EventId);
-  
+
+    const newGameInput = interaction.fields.getTextInputValue("newGameName");
+    const newDescInput =  interaction.fields.getTextInputValue("newEventDesc");
+    const newDateInput = interaction.fields.getTextInputValue("newDate");
+
+    const newGame = newGameInput !== "" && newGameInput || undefined;
+    const newDesc = newDescInput !== "" && newDescInput || undefined;
+    const newDate = newDateInput !== "" && new Date(newDateInput) || undefined;
+    
+    if(newDate && isNaN(newDate.getTime())){
+        await interaction.reply({ content: "Invalid date format! Please use YYYY-MM-DD HH:MM UTC.", ephemeral: true });
+        return;
+    }
+    
+    const updateFields: Record<string, any> = {};
+    if (newGame) updateFields.InfGame = newGame;
+    if (newDesc) updateFields.InfAdditional = newDesc;
+    if (newDate) updateFields.ScheduledAt = newDate;
+
+    if (Object.keys(updateFields).length > 0) {
+        await EventSchema.updateOne({ EventId }, { $set: updateFields });
+        const discordTimestamp = (newDate && `<t:${Math.floor(newDate.getTime() / 1000)}:F>`) || undefined;
+        
+        if (newGame) ServerEvent?.setName(`Game Night - ${newGame} 🎮`);
+        if (newDesc) ServerEvent?.setDescription(newDesc);
+
+        await interaction.reply({
+            content: `✅ Game information updated successfully.\nNew game: **${newGame + " ✅" || "Not updated ❌"}**\nNew additional information: **${newDesc + " ✅" || "Not updated ❌"}**\nNew date: **${discordTimestamp + " ✅" || "Not updated ❌" }**`,
+            ephemeral: true
+        });
+    } else {
+        await interaction.reply({
+            content: "⚠ No changes were provided.",
+            ephemeral: true
+        });
+    }
+
     // Update the database
-    await EventSchema.updateOne({ EventId }, { $set: { InfGame: newGame } });
-    ServerEvent?.setName(`Game Night - ${newGame} 🎮`);
+    //await EventSchema.updateOne({ EventId }, { $set: { InfGame: newGame, InfAdditional: newDesc, ScheduledAt: newDate } });
+    //ServerEvent?.setName(`Game Night - ${newGame} 🎮`);
     
 
-    await interaction.reply({ content: `✅ Game updated to **${newGame}**.`, ephemeral: true });
+    //await interaction.reply({ content: `✅ Game updated to **${newGame}**.`, ephemeral: true });
 }
 
 async function muteVC(interaction: ButtonInteraction, EventData: GnEventData) {
