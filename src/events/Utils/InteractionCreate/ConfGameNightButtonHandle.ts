@@ -22,16 +22,19 @@ async function handleGameNightConfirmation(interaction: ButtonInteraction) {
     }
 
     // Retrieve event details from the original message
-    const [ , dateLine, gameinfo, infoLine] = interaction.message.content.split("\n").filter(line => line.includes("**"));
+    const [ , dateLine, gameinfo, infoLine, endDateLine] = interaction.message.content.split("\n").filter(line => line.includes("**"));
     const game = gameinfo.split("**")[2].trim();
     const timestampMatch = dateLine.match(/<t:(\d+):F>/);
-    if (!timestampMatch) {
+    const endtimestampMatch = endDateLine.match(/<t:(\d+):F>/);
+    if (!timestampMatch || !endtimestampMatch) {
         await interaction.reply({ content: "Error parsing event date.", ephemeral: true });
         return;
     }
 
     const eventTimestamp = parseInt(timestampMatch[1]) * 1000; // Convert to milliseconds
+    const eventendTimestamp = parseInt(endtimestampMatch[1]) * 1000;
     const eventDate = new Date(eventTimestamp);
+    const eventEndDate = new Date(eventendTimestamp)
     const additionalInfo = infoLine.split("**")[2].trim();
     const hostId = interaction.user.id;
 
@@ -54,6 +57,7 @@ async function handleGameNightConfirmation(interaction: ButtonInteraction) {
             InfGame: game,
             InfAdditional: additionalInfo,
             ScheduledAt: eventDate,
+            ScheduledEndAt: eventEndDate,
             ReactedUsers: {
                 Users_Accept: [],
                 Users_Unsure: [],
@@ -83,8 +87,10 @@ async function handleGameNightConfirmation(interaction: ButtonInteraction) {
 
             const actionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(acceptButton, unsureButton, declineButton);
 
+            const eventDurationMin : number = (eventEndDate.valueOf() - eventDate.valueOf()) / 1000 / 60;
+
             await announcementChannel.send({
-                content: `🎉 **Game Night Scheduled!** 🎉\n\n📅 **Date:** <t:${eventTimestamp / 1000}:F>\n🎮 **Game:** ${game}\nℹ️ **Info:** ${additionalInfo}\n👑 **Host:** <@${hostId}>\n\n[Join Event](https://discord.com/events/${interaction.guild.id}/${serverEvent.id})`,
+                content: `# 🎉 **Game Night Scheduled!** 🎉\n\n📅 **Date:** <t:${eventTimestamp / 1000}:F>\n⏱️ **Duration: ${eventDurationMin} Minutes** \n🎮 **Game:** ${game}\nℹ️ **Info:** ${additionalInfo}\n👑 **Host:** <@${hostId}>\n\n[Join Event](https://discord.com/events/${interaction.guild.id}/${serverEvent.id})`,
                 components: [actionRow]
             });
         }

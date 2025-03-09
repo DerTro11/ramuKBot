@@ -3,6 +3,24 @@ import EventSchema from "../MongoDB/models/GameNight"; // Import your event sche
 import { GnEventData, GnEventStatus } from "types";
 import AppConf from "AppConfig";
 
+
+export async function cancelEvent(EventId: string, client : Client) : Promise<void> {}
+
+export async function completeEvent(EventId: string, client : Client) : Promise<void> {
+
+    await EventSchema.updateOne({ EventId }, {$set: {
+        Status: GnEventStatus.Completed
+    }});
+
+    const storedEvent : GnEventData = await EventSchema.findOne({ EventId }) as GnEventData ;
+    const guild = await client.guilds.fetch(AppConf.MainGuild);
+    
+    const discordEvent = guild?.scheduledEvents.cache.get(storedEvent.ServerEventID);
+    if (discordEvent) await discordEvent.setStatus(GuildScheduledEventStatus.Completed);
+    
+}
+
+
 export async function startEvent(EventId: string, client : Client) : Promise<void> {
     // Get event data from the database
     const storedEvent : GnEventData = await EventSchema.findOne({ EventId }) as GnEventData ;
@@ -48,3 +66,4 @@ export async function startEvent(EventId: string, client : Client) : Promise<voi
         console.error("Error starting the event:", err);
     }
 }
+

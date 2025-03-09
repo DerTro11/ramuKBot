@@ -15,6 +15,11 @@ const CommandBody = new SlashCommandBuilder()
             .setRequired(true)
     )
     .addStringOption(option =>
+        option.setName("end-time")
+            .setDescription("The date and time of the end time (format: YYYY-MM-DD HH:MM UTC)")
+            .setRequired(true)
+    )
+    .addStringOption(option =>
         option.setName("info")
             .setDescription("Additional information about the event (optional)")
             .setRequired(false)
@@ -26,6 +31,7 @@ export const Cmd: Command = {
         // Extract input
         const game = Interaction.options.getString("game", true);
         const dateString = Interaction.options.getString("date", true);
+        const endDateString = Interaction.options.getString("end-time", true);
         const additionalInfo = Interaction.options.getString("info") || "No additional info provided.";
 
         // Validate date format
@@ -35,8 +41,14 @@ export const Cmd: Command = {
             return;
         }
 
+        const endDate = new Date(endDateString);
+        if (isNaN(endDate.getTime())) {
+            await Interaction.reply({ content: "Invalid date format! Please use YYYY-MM-DD HH:MM UTC.", ephemeral: true });
+            return;
+        }
         // Create timestamp for Discord
         const discordTimestamp = `<t:${Math.floor(eventDate.getTime() / 1000)}:F>`;
+        const discordendTimestamp = `<t:${Math.floor(endDate.getTime() / 1000)}:F>`;
 
         // Create confirmation buttons
         const confirmButton = new ButtonBuilder()
@@ -53,7 +65,7 @@ export const Cmd: Command = {
 
         // Send confirmation message
         await Interaction.reply({
-            content: `🎮 **Game Night Proposal** 🎮\n\n📅 **Date:** ${discordTimestamp}\n🎮 **Game:** ${game}\nℹ️ **Info:** ${additionalInfo}\n\nDo you confirm this event?`,
+            content: `🎮 **Game Night Proposal** 🎮\n\n📅 **Date:** ${discordTimestamp}\n🎮 **Game:** ${game}\nℹ️ **Info:** ${additionalInfo}\n⏱️ **End at:** ${discordendTimestamp}\n\nDo you confirm this event?`,
             components: [actionRow],
             ephemeral: true
         });

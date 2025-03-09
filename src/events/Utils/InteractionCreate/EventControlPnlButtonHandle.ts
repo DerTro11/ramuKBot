@@ -18,19 +18,23 @@ export default async function handleHostControls(interaction: ButtonInteraction)
     
     
     if (interaction.customId.startsWith("event_cancel"))  cancelEvent(interaction, EventData);
-    else if (interaction.customId.startsWith("event_changegame"))  changeGame(interaction, EventData);
+    else if (interaction.customId.startsWith("event_edit"))  editEvent(interaction, EventData);
     else if (interaction.customId.startsWith("event_mute"))  muteVC(interaction, EventData);
     else if (interaction.customId.startsWith("event_end"))  endEvent(interaction, EventData);
-    
+    //else if (interaction.customId.startsWith("event_start"))  endEvent(interaction, EventData);
 }
 
-async function cancelEvent(interaction: ButtonInteraction, EventData: GnEventData) {
-    await EventSchema.deleteOne({ EventId: EventData.EventId });
 
+
+async function cancelEvent(interaction: ButtonInteraction, EventData: GnEventData) {
+    await EventSchema.updateOne({ EventId: EventData.EventId }, {$set: {
+        Status: GnEventStatus.Cancelled
+    }});
+    
     // Attempt to remove the Discord event
     const guild = interaction.guild;
     const discordEvent = guild?.scheduledEvents.cache.get(EventData.ServerEventID);
-    if (discordEvent) await discordEvent.delete();
+    if (discordEvent) await discordEvent.setStatus(GuildScheduledEventStatus.Canceled)
 
     // Notify users who accepted
     const acceptedUsers = EventData.ReactedUsers.Users_Accept || [];
@@ -42,7 +46,7 @@ async function cancelEvent(interaction: ButtonInteraction, EventData: GnEventDat
     await interaction.reply({ content: "✅ Event cancelled successfully.", ephemeral: true });
 }
 
-async function changeGame(interaction: ButtonInteraction, EventData: GnEventData) {
+async function editEvent(interaction: ButtonInteraction, EventData: GnEventData) {
     const modal = new ModalBuilder()
         .setCustomId(`changeGameModal_${EventData.EventId}`)
         .setTitle("Change Game Information");
@@ -62,11 +66,17 @@ async function changeGame(interaction: ButtonInteraction, EventData: GnEventData
         .setLabel("New date (Please use YYYY-MM-DD HH:MM UTC):")
         .setRequired(false)
         .setStyle(TextInputStyle.Short);
+    const endDateInput = new TextInputBuilder()
+        .setCustomId("newEndDate")
+        .setLabel("New end date (use YYYY-MM-DD HH:MM UTC):")
+        .setRequired(false)
+        .setStyle(TextInputStyle.Short);
 
     const actionRow1 = new ActionRowBuilder<TextInputBuilder>().addComponents(gameInput);
     const actionRow2 = new ActionRowBuilder<TextInputBuilder>().addComponents(descInput);
     const actionRow3 = new ActionRowBuilder<TextInputBuilder>().addComponents(dateInput);
-    modal.addComponents(actionRow1, actionRow2, actionRow3);
+    const actionRow4 = new ActionRowBuilder<TextInputBuilder>().addComponents(endDateInput);
+    modal.addComponents(actionRow1, actionRow2, actionRow3, actionRow4);
 
     await interaction.showModal(modal);
 
@@ -83,12 +93,14 @@ async function handleModalSubmission(interaction: ModalSubmitInteraction) {
     const newGameInput = interaction.fields.getTextInputValue("newGameName");
     const newDescInput =  interaction.fields.getTextInputValue("newEventDesc");
     const newDateInput = interaction.fields.getTextInputValue("newDate");
+    const newEndDateInput = interaction.fields.getTextInputValue("newEndDate");
 
     const newGame = newGameInput !== "" && newGameInput || undefined;
     const newDesc = newDescInput !== "" && newDescInput || undefined;
     const newDate = newDateInput !== "" && new Date(newDateInput) || undefined;
+    const newEndDate = newDateInput !== "" && new Date(newEndDateInput) || undefined;
     
-    if(newDate && isNaN(newDate.getTime())){
+    if(newDate && isNaN(newDate.getTime())  ||  newEndDate && isNaN(newEndDate.getTime())){
         await interaction.reply({ content: "Invalid date format! Please use YYYY-MM-DD HH:MM UTC.", ephemeral: true });
         return;
     }
@@ -97,16 +109,18 @@ async function handleModalSubmission(interaction: ModalSubmitInteraction) {
     if (newGame) updateFields.InfGame = newGame;
     if (newDesc) updateFields.InfAdditional = newDesc;
     if (newDate) updateFields.ScheduledAt = newDate;
+    if (newEndDate) updateFields.ScheduledEndAt = newEndDate;
 
     if (Object.keys(updateFields).length > 0) {
         await EventSchema.updateOne({ EventId }, { $set: updateFields });
         const discordTimestamp = (newDate && `<t:${Math.floor(newDate.getTime() / 1000)}:F>`) || undefined;
-        
+        const discordEndTimestamp = (newEndDate && `<t:${Math.floor(newEndDate.getTime() / 1000)}:F>`) || undefined;
+
         if (newGame) ServerEvent?.setName(`Game Night - ${newGame} 🎮`);
         if (newDesc) ServerEvent?.setDescription(newDesc);
 
         await interaction.reply({
-            content: `✅ Game information updated successfully.\nNew game: **${newGame + " ✅" || "Not updated ❌"}**\nNew additional information: **${newDesc + " ✅" || "Not updated ❌"}**\nNew date: **${discordTimestamp + " ✅" || "Not updated ❌" }**`,
+            content: `✅ Game information updated successfully.\nNew game: **${newGame + " ✅" || "Not updated ❌"}**\nNew additional information: **${newDesc + " ✅" || "Not updated ❌"}**\nNew date: **${discordTimestamp + " ✅" || "Not updated ❌" }**\nNew date: **${discordEndTimestamp + " ✅" || "Not updated ❌" }**`,
             ephemeral: true
         });
     } else {
@@ -145,11 +159,12 @@ async function muteVC(interaction: ButtonInteraction, EventData: GnEventData) {
 }
 
 async function endEvent(interaction: ButtonInteraction, EventData: GnEventData) {
-    await EventSchema.deleteOne({ EventId: EventData.EventId });
-
+    await EventSchema.updateOne({ EventId: EventData.EventId }, {$set: {
+        Status: GnEventStatus.Completed
+    }});
     const guild = interaction.guild;
     const discordEvent = guild?.scheduledEvents.cache.get(EventData.ServerEventID);
-    if (discordEvent) await discordEvent.delete();
+    if (discordEvent) await discordEvent.setStatus(GuildScheduledEventStatus.Completed);
 
-    await interaction.reply({ content: "✅ Event ended and removed.", ephemeral: true });
+    await interaction.reply({ content: "✅ Event ended.", ephemeral: true });
 }

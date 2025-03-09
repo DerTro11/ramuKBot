@@ -22,6 +22,10 @@ export const Cmd: Command = {
             Interaction.reply({ content: "⚠️ Event not found.", ephemeral: true });
             return;
         }
+        if(EventData.Status === "Cancelled" || EventData.Status === "Completed"){
+            Interaction.reply({content: "⚠️ Event was cancelled or completed", ephemeral: true})
+            return;
+        }
 
         // Ensure the user is the host of the event
         if (EventData.HostDCId !== Interaction.user.id) {
@@ -30,27 +34,32 @@ export const Cmd: Command = {
         }
 
         // Define buttons for host controls
-        const Buttons = new ActionRowBuilder<ButtonBuilder>()
-            .addComponents(
-                new ButtonBuilder()
-                    .setCustomId(`event_cancel_${EventId}`)
-                    .setLabel("Cancel Event")
-                    .setStyle(ButtonStyle.Danger),
+        const Buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder()
+                .setCustomId(`event_cancel_${EventId}`)
+                .setLabel("Cancel Event")
+                .setStyle(ButtonStyle.Danger),
+                
+            new ButtonBuilder()
+                .setCustomId(`event_end_${EventId}`)
+                .setLabel("End Event")
+                .setStyle(ButtonStyle.Danger),
 
-                new ButtonBuilder()
-                    .setCustomId(`event_changegame_${EventId}`)
-                    .setLabel("Change Game Info")
-                    .setStyle(ButtonStyle.Primary),
-                    new ButtonBuilder()
-                    .setCustomId(`event_mute_${EventId}`)
-                    .setLabel("Mute VC Members")
-                    .setStyle(ButtonStyle.Secondary),
+            new ButtonBuilder()
+                .setCustomId(`event_start_${EventId}`)
+                .setLabel("Start now!")
+                .setStyle(ButtonStyle.Success),
+                
+            new ButtonBuilder()
+                .setCustomId(`event_edit_${EventId}`)
+                .setLabel("edit the event")
+                .setStyle(ButtonStyle.Primary),
 
-                new ButtonBuilder()
-                    .setCustomId(`event_end_${EventId}`)
-                    .setLabel("End Event")
-                    .setStyle(ButtonStyle.Danger)
-            );
+            new ButtonBuilder()
+                .setCustomId(`event_mute_${EventId}`)
+                .setLabel("Mute VC Members")
+                .setStyle(ButtonStyle.Secondary),
+        );
 
         await Interaction.reply({
             content: `🎮 **Event Control Panel**\nUse the buttons below to manage the event.`,
