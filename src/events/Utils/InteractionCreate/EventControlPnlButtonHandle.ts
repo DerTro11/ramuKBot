@@ -26,12 +26,12 @@ export default async function handleHostControls(interaction: ButtonInteraction)
 }
 
 async function pressStartEvent(interaction: ButtonInteraction, EventData: GnEventData) {
-    try {
+    //try {
         await startEvent(EventData.EventId, interaction.client)
         await interaction.reply({ content: "✅ Event started successfully.", ephemeral: true });
-    } catch (err) {
-        await interaction.reply({ content: "❌ Failed to start event.", ephemeral: true });
-    }
+    //} catch (err) {
+    //    await interaction.reply({ content: "❌ Failed to start event.", ephemeral: true });
+    //}
 }
 
 async function cancelEvent(interaction: ButtonInteraction, EventData: GnEventData) {
@@ -46,7 +46,7 @@ async function cancelEvent(interaction: ButtonInteraction, EventData: GnEventDat
 
     // Notify users who accepted
     const acceptedUsers = EventData.ReactedUsers.Users_Accept || [];
-    const EventTimestamp = `<t:${Math.floor(EventData.ScheduleEndAt.getTime() / 1000)}:F>`
+    const EventTimestamp = `<t:${Math.floor(EventData.ScheduledAt.getTime() / 1000)}:F>`
     for (const userId of acceptedUsers) {
         const user = await interaction.client.users.fetch(userId).catch(() => null);
         if (user) user.send(`❌ The ${EventData.InfGame} Game Night event at the ${EventTimestamp} from <@${EventData.HostDCId}> has been cancelled.`);

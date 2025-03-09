@@ -26,7 +26,7 @@ export default async function checkEvents(client : Client) {
 
             // Call startEvent when the time comes
              
-            if(now < event.ScheduleEndAt) await startEvent(event.EventId, client);
+            if(now < event.ScheduledEndAt) await startEvent(event.EventId, client);
             else await completeEvent(event.EventId, client)
         }
     }, 60_000)

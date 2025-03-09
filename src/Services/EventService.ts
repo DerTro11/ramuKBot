@@ -1,7 +1,7 @@
 import { GuildScheduledEventStatus, ButtonInteraction, TextChannel, EmbedBuilder, Client } from "discord.js";
 import EventSchema from "../MongoDB/models/GameNight"; // Import your event schema
-import { GnEventData, GnEventStatus } from "types";
-import AppConf from "AppConfig";
+import { GnEventData, GnEventStatus } from "../types";
+import AppConf from "../AppConfig";
 
 
 export async function cancelEvent(EventId: string, client : Client) : Promise<void> {}

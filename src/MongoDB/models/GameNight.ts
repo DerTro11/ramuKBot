@@ -7,7 +7,7 @@ const GameNightSchema = new mongoose.Schema({
     InfGame: { type: String, required: true },
     InfAdditional: { type: String, default: "" },
     ScheduledAt: { type: Date, required: true },
-    ScheduledEndAt: {type: Date, require: true},
+    ScheduledEndAt: { type: Date, require: true, default: new Date() },
     ReactedUsers: {
         Users_Accept: { type: [String], default: [] },
         Users_Unsure: { type: [String], default: [] },

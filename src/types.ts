@@ -21,7 +21,7 @@ export interface GnEventData {
     InfGame: string,
     InfAdditional: string,
     ScheduledAt: Date,
-    ScheduleEndAt: Date,
+    ScheduledEndAt: Date,
     ReactedUsers: {
         Users_Accept: string[],
         Users_Unsure: string[],
