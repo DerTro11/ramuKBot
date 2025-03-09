@@ -1,6 +1,7 @@
 import { ButtonInteraction, EmbedBuilder, GuildMember, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, ModalSubmitInteraction, GuildScheduledEventStatus  } from "discord.js";
 import EventSchema from "../../../MongoDB/models/GameNight"; // Import MongoDB schema
 import {GnEventData, GnEventStatus} from "../../../types";
+import { startEvent } from "../../../Services/EventService";
 
 export default async function handleHostControls(interaction: ButtonInteraction) {
     const EventId = interaction.customId.split("_")[2];
@@ -21,10 +22,17 @@ export default async function handleHostControls(interaction: ButtonInteraction)
     else if (interaction.customId.startsWith("event_edit"))  editEvent(interaction, EventData);
     else if (interaction.customId.startsWith("event_mute"))  muteVC(interaction, EventData);
     else if (interaction.customId.startsWith("event_end"))  endEvent(interaction, EventData);
-    //else if (interaction.customId.startsWith("event_start"))  endEvent(interaction, EventData);
+    else if (interaction.customId.startsWith("event_start"))  pressStartEvent(interaction, EventData);
 }
 
-
+async function pressStartEvent(interaction: ButtonInteraction, EventData: GnEventData) {
+    try {
+        await startEvent(EventData.EventId, interaction.client)
+        await interaction.reply({ content: "✅ Event started successfully.", ephemeral: true });
+    } catch (err) {
+        await interaction.reply({ content: "❌ Failed to start event.", ephemeral: true });
+    }
+}
 
 async function cancelEvent(interaction: ButtonInteraction, EventData: GnEventData) {
     await EventSchema.updateOne({ EventId: EventData.EventId }, {$set: {
@@ -38,9 +46,10 @@ async function cancelEvent(interaction: ButtonInteraction, EventData: GnEventDat
 
     // Notify users who accepted
     const acceptedUsers = EventData.ReactedUsers.Users_Accept || [];
+    const EventTimestamp = `<t:${Math.floor(EventData.ScheduleEndAt.getTime() / 1000)}:F>`
     for (const userId of acceptedUsers) {
         const user = await interaction.client.users.fetch(userId).catch(() => null);
-        if (user) user.send(`❌ The Game Night event has been cancelled.`);
+        if (user) user.send(`❌ The ${EventData.InfGame} Game Night event at the ${EventTimestamp} from <@${EventData.HostDCId}> has been cancelled.`);
     }
 
     await interaction.reply({ content: "✅ Event cancelled successfully.", ephemeral: true });
