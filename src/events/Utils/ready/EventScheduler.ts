@@ -1,7 +1,7 @@
 import AppConfig from "../../../AppConfig";
 import EventSchema from "../../../MongoDB/models/GameNight";
 import { Client, GuildScheduledEventStatus } from "discord.js";
-import { startEvent, completeEvent } from "../../../Services/EventService";
+import { startEvent, completeEvent, cancelEvent } from "../../../Services/EventService";
 import { GnEventData, GnEventStatus } from "../../../types";
 
 export default async function checkEvents(client : Client) {
@@ -10,7 +10,7 @@ export default async function checkEvents(client : Client) {
         const now = new Date();
 
         // Find all events scheduled to start
-        const eventsToStart : GnEventData[] = await EventSchema.find({
+        const eventsToStart = await EventSchema.find({
             "ScheduledAt": { $lte: now }, // Events where the date is now or past
             "Status": { $in: ["Scheduled", "Active"] }
         });
@@ -23,8 +23,9 @@ export default async function checkEvents(client : Client) {
 
             // Call startEvent when the time comes
              
-            if(now < event.ScheduledEndAt) await startEvent(event.EventId, client);
-            else await completeEvent(event.EventId, client)
+            if(now < event.ScheduledAt && now > event.ScheduledEndAt && event.Status === "Scheduled") await startEvent(event.EventId, client);
+            else if(now < event.ScheduledEndAt && event.Status === "Active" ) await completeEvent(event.EventId, client);
+            else if(now < event.ScheduledEndAt && event.Status === "Scheduled") await cancelEvent(event.EventId, client);
         }
     }, 60_000)
     
