@@ -4,7 +4,27 @@ import { GnEventData, GnEventStatus } from "../types";
 import AppConf from "../AppConfig";
 
 
-export async function cancelEvent(EventId: string, client : Client) : Promise<void> {}
+export async function cancelEvent(EventId: string, client : Client) : Promise<void> {
+    await EventSchema.updateOne({ EventId }, {$set: {
+            Status: GnEventStatus.Cancelled
+        }});
+
+        const EventData = await EventSchema.findOne({EventId})
+        if(!EventData) throw Error(`Could not find event of id ${EventId}`)
+
+        // Attempt to remove the Discord event
+        const guild = await client.guilds.fetch(AppConf.MainGuild);
+        const discordEvent = guild?.scheduledEvents.cache.get(EventData.ServerEventID);
+        if (discordEvent) await discordEvent.setStatus(GuildScheduledEventStatus.Canceled)
+    
+        // Notify users who accepted
+        const acceptedUsers = EventData.ReactedUsers?.Users_Accept || [];
+        const EventTimestamp = `<t:${Math.floor(EventData.ScheduledAt.getTime() / 1000)}:F>`
+        for (const userId of acceptedUsers) {
+            const user = await client.users.fetch(userId).catch(() => null);
+            if (user) user.send(`❌ The ${EventData.InfGame} Game Night event at the ${EventTimestamp} from <@${EventData.HostDCId}> has been cancelled.`);
+        }
+}
 
 export async function completeEvent(EventId: string, client : Client) : Promise<void> {
 
