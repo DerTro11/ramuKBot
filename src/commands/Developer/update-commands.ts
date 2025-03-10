@@ -1,6 +1,6 @@
 import { EmbedBuilder, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
 import { Command } from "../../types";
-import DeployCommands from "commands/DeployCommands";
+import DeployCommands from "../DeployCommands";
 
 
 const CommandBody = new SlashCommandBuilder()
