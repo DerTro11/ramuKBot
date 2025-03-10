@@ -3,8 +3,10 @@ import EventSchema from "../../../MongoDB/models/GameNight"; // Import MongoDB s
 import {GnEventData, GnEventStatus} from "../../../types";
 import { startEvent } from "../../../Services/EventService";
 
+const HostCmds = ["cancel", "edit", "mute", "end", "start"]
+
 export default async function handleHostControls(interaction: ButtonInteraction) {
-    const EventId = interaction.customId.split("_")[2];
+    const [, Action ,EventId] = interaction.customId.split("_");
     const EventData : GnEventData | null = await EventSchema.findOne({ EventId });
 
     if (!EventData) {
@@ -12,7 +14,7 @@ export default async function handleHostControls(interaction: ButtonInteraction)
         return;
     }
 
-    if (EventData.HostDCId !== interaction.user.id) {
+    if (EventData.HostDCId !== interaction.user.id && HostCmds.find( (element) => element === Action )) {
         interaction.reply({ content: "🚫 You are not the host of this event.", ephemeral: true });
         return;
     }
@@ -23,6 +25,29 @@ export default async function handleHostControls(interaction: ButtonInteraction)
     else if (interaction.customId.startsWith("event_mute"))  muteVC(interaction, EventData);
     else if (interaction.customId.startsWith("event_end"))  endEvent(interaction, EventData);
     else if (interaction.customId.startsWith("event_start"))  pressStartEvent(interaction, EventData);
+    else if (interaction.customId.startsWith("event_reactedusrs")) listReactedUsers(interaction, EventData);
+}
+
+async function listReactedUsers(interaction : ButtonInteraction, EventData : GnEventData) {
+    const textReply = `${EventData.ReactedUsers.Users_Accept.length} want to attend this event: ${ListUsersFromArray(EventData.ReactedUsers.Users_Accept)}\n${EventData.ReactedUsers.Users_Unsure.length} might attend this event: ${ListUsersFromArray(EventData.ReactedUsers.Users_Unsure)}\n${EventData.ReactedUsers.Users_Decline.length} won't attend this event: ${ListUsersFromArray(EventData.ReactedUsers.Users_Decline)}`
+    interaction.reply({content: textReply, ephemeral: true})
+}
+
+function ListUsersFromArray(UserArray : string[]){
+    if (UserArray.length === 0) return "*No one yet.*"; 
+
+    const ForLoopLength = Math.min(UserArray.length, 10);
+    let ReactedUsers = UserArray.slice(0, ForLoopLength).map(id => `<@${id}>`).join(" ");
+
+    //for (let index = 0; index < ForLoopLength-1; index++) {
+    //    ReactedUsers = ReactedUsers + `<@${UserArray[index]}> `;
+    //}
+    
+
+    if(UserArray.length > ForLoopLength) 
+        ReactedUsers +=`and ${UserArray.length - 10} more`
+
+    return ReactedUsers;
 }
 
 async function pressStartEvent(interaction: ButtonInteraction, EventData: GnEventData) {

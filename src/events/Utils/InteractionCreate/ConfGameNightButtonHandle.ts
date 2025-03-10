@@ -78,14 +78,19 @@ async function handleGameNightConfirmation(interaction: ButtonInteraction) {
             const unsureButton = new ButtonBuilder()
                 .setCustomId(`unsure_${serverEvent.id}`)
                 .setLabel("🤔 Unsure")
-                .setStyle(ButtonStyle.Secondary);
+                .setStyle(ButtonStyle.Primary);
 
             const declineButton = new ButtonBuilder()
                 .setCustomId(`decline_${serverEvent.id}`)
                 .setLabel("❌ Decline")
                 .setStyle(ButtonStyle.Danger);
+                
+            const showReactedButton = new ButtonBuilder()
+                .setCustomId(`event_reactedusrs_${serverEvent.id}`)
+                .setLabel("Show reacted members 👥")
+                .setStyle(ButtonStyle.Secondary);
 
-            const actionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(acceptButton, unsureButton, declineButton);
+            const actionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(acceptButton, unsureButton, declineButton, showReactedButton);
 
             const eventDurationMin : number = (eventEndDate.valueOf() - eventDate.valueOf()) / 1000 / 60;
 
