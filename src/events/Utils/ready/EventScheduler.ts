@@ -12,7 +12,7 @@ export default async function checkEvents(client : Client) {
         // Find all events scheduled to start
         const eventsToStart : GnEventData[] = await EventSchema.find({
             "ScheduledAt": { $lte: now }, // Events where the date is now or past
-            "Status": "Scheduled"
+            "Status": { $in: ["Scheduled", "Active"] }
         });
 
 
