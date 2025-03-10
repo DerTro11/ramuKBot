@@ -1,0 +1,4 @@
+DCToken = YourKeyHere
+AppID = 1234
+clntID = 1234
+MONGO_URI = "mongodb+srv://[User]:[Password]@[Cluster].[...].mongodb.net/"
