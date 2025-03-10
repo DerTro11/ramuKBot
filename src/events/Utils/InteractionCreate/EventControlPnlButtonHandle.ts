@@ -26,12 +26,13 @@ export default async function handleHostControls(interaction: ButtonInteraction)
 }
 
 async function pressStartEvent(interaction: ButtonInteraction, EventData: GnEventData) {
-    //try {
+    try {
         await startEvent(EventData.EventId, interaction.client)
         await interaction.reply({ content: "✅ Event started successfully.", ephemeral: true });
-    //} catch (err) {
-    //    await interaction.reply({ content: "❌ Failed to start event.", ephemeral: true });
-    //}
+    } catch (err) {
+        await interaction.reply({ content: "❌ Failed to start event.", ephemeral: true });
+        console.error(`Failed to start event: ${err}`)
+    }
 }
 
 async function cancelEvent(interaction: ButtonInteraction, EventData: GnEventData) {
