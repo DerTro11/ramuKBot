@@ -51,7 +51,7 @@ export async function startEvent(EventId: string, client : Client) : Promise<voi
     // Get event data from the database
     const storedEvent  = await EventSchema.findOne({ EventId }) as GnEventData ;
     if(!storedEvent) throw Error(`Failed to start event: Event ${EventId} does not excist!`);
-    if(storedEvent.Status === "Scheduled") throw Error(`Failed to start event: Event ${EventId} is not of status Scheduled!`);
+    if(storedEvent.Status !== "Scheduled") throw Error(`Failed to start event: Event ${EventId} is not of status Scheduled!`);
 
     // Notify accepted users
     const acceptedUsers = storedEvent?.ReactedUsers?.Users_Accept;
