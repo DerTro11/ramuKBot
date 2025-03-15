@@ -25,7 +25,7 @@ export default async function checkEvents(client : Client) {
              
             if(now < event.ScheduledAt && now > event.ScheduledEndAt && event.Status === "Scheduled") await startEvent(event.EventId, client);
             else if(now < event.ScheduledEndAt && event.Status === "Active" ) await completeEvent(event.EventId, client);
-            else if(now < event.ScheduledEndAt && event.Status === "Scheduled") await cancelEvent(event.EventId, client);
+            else if(now > event.ScheduledEndAt && event.Status === "Scheduled") await cancelEvent(event.EventId, client);
         }
     }, 60_000)
     
