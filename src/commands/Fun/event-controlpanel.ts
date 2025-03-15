@@ -61,9 +61,16 @@ export const Cmd: Command = {
                 .setStyle(ButtonStyle.Secondary),
         );
 
+        const Buttons2 = new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder()
+                .setCustomId(`event_unmute_${EventId}`)
+                .setLabel("Unmute VC Members")
+                .setStyle(ButtonStyle.Secondary),
+        );
+
         await Interaction.reply({
             content: `🎮 **Event Control Panel**\nUse the buttons below to manage the event.`,
-            components: [Buttons],
+            components: [Buttons, Buttons2],
             ephemeral: true
         });
     }

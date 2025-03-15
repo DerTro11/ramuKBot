@@ -23,6 +23,7 @@ export default async function handleHostControls(interaction: ButtonInteraction)
     if (interaction.customId.startsWith("event_cancel"))  cancelEvent(interaction, EventData);
     else if (interaction.customId.startsWith("event_edit"))  editEvent(interaction, EventData);
     else if (interaction.customId.startsWith("event_mute"))  muteVC(interaction, EventData);
+    else if (interaction.customId.startsWith("event_unmute"))  muteVC(interaction, EventData, false);
     else if (interaction.customId.startsWith("event_end"))  endEvent(interaction, EventData);
     else if (interaction.customId.startsWith("event_start"))  pressStartEvent(interaction, EventData);
     else if (interaction.customId.startsWith("event_reactedusrs")) listReactedUsers(interaction, EventData);
@@ -38,11 +39,6 @@ function ListUsersFromArray(UserArray : string[]){
 
     const ForLoopLength = Math.min(UserArray.length, 10);
     let ReactedUsers = UserArray.slice(0, ForLoopLength).map(id => `<@${id}>`).join(" ");
-
-    //for (let index = 0; index < ForLoopLength-1; index++) {
-    //    ReactedUsers = ReactedUsers + `<@${UserArray[index]}> `;
-    //}
-    
 
     if(UserArray.length > ForLoopLength) 
         ReactedUsers +=`and ${UserArray.length - 10} more`
@@ -60,12 +56,13 @@ async function pressStartEvent(interaction: ButtonInteraction, EventData: GnEven
     }
 }
 
+
 async function cancelEvent(interaction: ButtonInteraction, EventData: GnEventData) {
     await EventSchema.updateOne({ EventId: EventData.EventId }, {$set: {
         Status: GnEventStatus.Cancelled
     }});
     
-    // Attempt to remove the Discord event
+
     const guild = interaction.guild;
     const discordEvent = guild?.scheduledEvents.cache.get(EventData.ServerEventID);
     if (discordEvent) await discordEvent.setStatus(GuildScheduledEventStatus.Canceled)
@@ -164,16 +161,9 @@ async function handleModalSubmission(interaction: ModalSubmitInteraction) {
             ephemeral: true
         });
     }
-
-    // Update the database
-    //await EventSchema.updateOne({ EventId }, { $set: { InfGame: newGame, InfAdditional: newDesc, ScheduledAt: newDate } });
-    //ServerEvent?.setName(`Game Night - ${newGame} 🎮`);
-    
-
-    //await interaction.reply({ content: `✅ Game updated to **${newGame}**.`, ephemeral: true });
 }
 
-async function muteVC(interaction: ButtonInteraction, EventData: GnEventData) {
+async function muteVC(interaction: ButtonInteraction, EventData: GnEventData, SetMute : boolean = true) {
     const guild = interaction.guild;
     if (!guild) return interaction.reply({ content: "⚠️ Guild not found.", ephemeral: true });
     const EventVoiceChannel = guild?.scheduledEvents.cache.get(EventData.ServerEventID)?.channel?.id;
@@ -186,11 +176,11 @@ async function muteVC(interaction: ButtonInteraction, EventData: GnEventData) {
 
     for (const member of voiceChannel.members.values()) {
         if (member instanceof GuildMember) {
-            await member.voice.setMute(true).catch(() => null);
+            await member.voice.setMute(SetMute).catch(() => null);
         }
     }
 
-    await interaction.reply({ content: "🔇 All members in the event VC have been muted.", ephemeral: true });
+    await interaction.reply({ content: "🔇 All members in the event VC have been mute toggled.", ephemeral: true });
 }
 
 async function endEvent(interaction: ButtonInteraction, EventData: GnEventData) {

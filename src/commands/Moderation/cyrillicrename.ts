@@ -26,7 +26,8 @@ export const Cmd : Command = {
 
             await Interaction.editReply("Successfully changed nickname.")
         }catch(err){
-            await Interaction.editReply("Could not change nickname due to an error")
+            await Interaction.editReply("Could not change nickname due to an error");
+            console.error(`Error while cyrillicfying name: ${err}`)
         }
         
     },
