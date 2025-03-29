@@ -14,8 +14,10 @@ export const Cmd: Command = {
         
         // Fetch events sorted by date, limited to 10
         let events = await GameNightEvent.find({
-            Status: { $in: ["Scheduled", "Active"] },
-            ScheduledAt: { $gte: now }
+            $or: [
+                { Status: "Active" }, // Include all Active events
+                { Status: "Scheduled", ScheduledAt: { $gte: now } } // Only include Scheduled ones that haven't started
+            ]
         }).sort({ ScheduledAt: 1 }).limit(10) ;
         
         const activeCount = await GameNightEvent.countDocuments({ Status: "Active" });
