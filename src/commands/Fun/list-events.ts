@@ -16,22 +16,30 @@ export const Cmd: Command = {
         let events = await GameNightEvent.find({
             $or: [
                 { Status: "Active" }, // Include all Active events
-                { Status: "Scheduled", ScheduledAt: { $gte: now } } // Only include Scheduled ones that haven't started
+                { Status: "Scheduled", ScheduledAt: { $gte: now } }, // Only include Scheduled ones that haven't started
+                { Status: "Cancelled", ScheduledEndAt: { $gt: now } }
             ]
         }).sort({ ScheduledAt: 1 }).limit(10) ;
         
         const activeCount = await GameNightEvent.countDocuments({ Status: "Active" });
         const scheduledCount = await GameNightEvent.countDocuments({ Status: "Scheduled" });
         
+        
         if (!events.length) {
             interaction.editReply("No active or scheduled events found.");
             return;
         }
         
+        const HexColors = {
+            "Active": 0x00FF00,
+            "Scheduled": 0xFFD700,
+            "Cancelled": 0xFF0000,
+            "Completed": 0x000000
+        }
 
         const embeds = events.map(event => {
             const embed = new EmbedBuilder()
-                .setTitle(`Game Night - ${event.InfGame}`)
+                .setTitle(`[${event.Status.toUpperCase()}] Game Night - ${event.InfGame}`)
                 .setDescription(event.InfAdditional || "No additional information provided.")
                 .addFields(
                     { name: "Date", value: `<t:${Math.floor(event.ScheduledAt.getTime() / 1000)}:F>` },
@@ -41,7 +49,7 @@ export const Cmd: Command = {
                 )
                 .setFooter({ text: `Event ID: ${event.EventId}` }) // | Listed on ${now.toDateString()}
                 .setTimestamp(new Date())
-                .setColor(event.Status === "Active" ? 0x00FF00 : 0xFFD700);
+                .setColor(HexColors[event.Status] || 0x000000);
             return embed;
         });
         
