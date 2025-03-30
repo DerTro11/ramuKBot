@@ -1,4 +1,4 @@
-import { CommandInteraction, SlashCommandBuilder, ClientEvents, ChatInputCommandInteraction, Interaction} from "discord.js"
+import { CommandInteraction, SlashCommandBuilder, ClientEvents, ChatInputCommandInteraction, Interaction, BaseInteraction} from "discord.js"
 
 
 export interface Command {
@@ -14,8 +14,9 @@ export interface EventHandler<Event extends EventName> {
     off?: (...args: ClientEvents[Event]) => void | Promise<void>
 }
 
-interface AppInteraction{
-    InteractionFilter: (Interaction : Interaction) => boolean
+export interface AppInteraction{
+    InteractionFilter: (Interaction : Interaction) => boolean,
+    Execute: (Interaction : Interaction) => void | Promise<void> 
 }
 
 export interface GnEventData {
