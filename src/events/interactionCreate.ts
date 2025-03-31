@@ -3,7 +3,7 @@ import { readdirSync } from "fs";
 import path from "path";
 
 
-const interactionModules = new Map<string, AppInteraction>();
+const interactionModules = new Map<string, AppInteraction>(); // Map for saving AppInteractions for later use, to improve load time.
 
 const eventFiles = readdirSync("./src/events/Interactions");
 for (const file of eventFiles) {
