@@ -118,3 +118,6 @@ const exp : AppInteraction = {
     Execute: execute,
     InteractionFilter: (Interaction : Interaction) => Interaction.isButton() && (Interaction.customId.startsWith("confirm_gamenight") || Interaction.customId.startsWith("cancel_gamenight"))
 }
+
+
+export default exp;
