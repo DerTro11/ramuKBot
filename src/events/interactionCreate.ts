@@ -1,28 +1,26 @@
-import { InteractionType, ChatInputCommandInteraction, CommandInteraction } from "discord.js";
-import {Command, EventHandler} from "../types";
+import { EventHandler, AppInteraction} from "../types";
+import { readdirSync } from "fs";
+import path from "path";
 
 
-import HandleCommand from "./Utils/InteractionCreate/HandleCommand";
-import HandleConfGameNightButton from "./Utils/InteractionCreate/ConfGameNightButtonHandle";
-import HandleRSVPButton from "./Utils/InteractionCreate/GNRSVPButtonHandler";
-import HandleHostCntrlButton from "./Utils/InteractionCreate/EventControlPnlButtonHandle";
+const interactionModules = new Map<string, AppInteraction>();
+
+const eventFiles = readdirSync("./src/events/Interactions");
+for (const file of eventFiles) {
+    if (!file.toLowerCase().endsWith(".ts")) continue;
+    const eventName = file.split(".")[0]; // Remove file extension
+    const interaction: AppInteraction = require(path.resolve(__dirname, `../events/Interactions/${file}`)).default;
+    
+    interactionModules.set(eventName, interaction);
+}
 
 const Handler : EventHandler<"interactionCreate"> = {
-    on(interaction) {
-        
-        if(interaction.type === InteractionType.ApplicationCommand && interaction.isChatInputCommand()){
-            HandleCommand(interaction);
+    async on(interaction) {
+        for (const [, InteractionModule] of interactionModules) {
+            if (InteractionModule.InteractionFilter(interaction)) {
+                await InteractionModule.Execute(interaction);
+            }
         }
-        else if(interaction.isButton() && interaction.customId.endsWith("gamenight")){
-            HandleConfGameNightButton(interaction);
-        }
-        else if(interaction.isButton() && interaction.customId.startsWith("event")){
-            HandleHostCntrlButton(interaction);
-        }
-        else if(interaction.isButton() && interaction.customId.match(/(accept|unsure|decline)_(\d+)/)){
-            HandleRSVPButton(interaction);
-        }
-
     },
 } 
 

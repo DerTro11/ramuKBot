@@ -3,7 +3,7 @@ import { ButtonInteraction, Interaction, GuildMember, ModalBuilder, TextInputBui
 import { startEvent } from "../../Services/EventService";
 import EventSchema from "../../MongoDB/models/GameNight"; 
 
-const HostCmds = ["cancel", "edit", "mute", "end", "start"]
+const HostCmds = ["cancel", "edit", "mute", "end", "start"] // Buttons which can only be pressed by a host
 
 async function execute(interaction : Interaction){
     interaction = interaction as ButtonInteraction;
