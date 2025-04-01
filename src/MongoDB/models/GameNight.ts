@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
 
 const GameNightSchema = new mongoose.Schema({
-    EventId: { type: String, unique: true, required: true },
     HostDCId: { type: String, required: true },
     ServerEventID: { type: String, required: true },
     InfGame: { type: String, required: true },
@@ -18,6 +17,6 @@ const GameNightSchema = new mongoose.Schema({
         enum: ["Scheduled", "Cancelled", "Completed", "Active"],
         default: "Scheduled"
     }
-}, { timestamps: true, collection: "StoredEvents" });
+}, { collection: "StoredEvents" });
 
 export default  mongoose.model("GameNightEvent", GameNightSchema);

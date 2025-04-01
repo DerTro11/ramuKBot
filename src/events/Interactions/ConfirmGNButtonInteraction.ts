@@ -53,7 +53,6 @@ async function handleGameNightConfirmation(interaction: ButtonInteraction) {
 
         // Save to MongoDB
         const gameNight = new GameNight({
-            EventId: serverEvent.id,
             HostDCId: hostId,
             ServerEventID: serverEvent.id,
             InfGame: game,

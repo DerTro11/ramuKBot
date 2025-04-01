@@ -1,5 +1,6 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 import { Command } from "types";
+import { ObjectId } from "mongoose";
 import EventSchema from "../../MongoDB/models/GameNight"; // Import your MongoDB schema
 
 const CommandBody = new SlashCommandBuilder()
@@ -16,7 +17,7 @@ export const Cmd: Command = {
     CommandBody: CommandBody,
     async execute(Interaction) {
         const EventId = Interaction.options.getString("event_id", true);
-        const EventData = await EventSchema.findOne({ EventId });
+        const EventData = await EventSchema.findById(EventId);
 
         if (!EventData) {
             Interaction.reply({ content: "⚠️ Event not found.", ephemeral: true });

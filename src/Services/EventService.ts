@@ -5,11 +5,11 @@ import AppConf from "../AppConfig";
 
 
 export async function cancelEvent(EventId: string, client : Client) : Promise<void> {
-    const EventData = await EventSchema.findOne({EventId}) as GnEventData;
+    const EventData = await EventSchema.findById(EventId) as GnEventData;
     if(!EventData) throw Error(`Could not find event of id ${EventId}`);
     if(EventData.Status !== "Scheduled") throw Error("Event to cancel has to be of status\"Scheduled\"!");
     
-    await EventSchema.updateOne({ EventId }, {$set: {
+    await EventSchema.updateOne({ _id: EventId }, {$set: {
         Status: GnEventStatus.Cancelled
     }});
 
@@ -30,11 +30,11 @@ export async function cancelEvent(EventId: string, client : Client) : Promise<vo
 }
 
 export async function completeEvent(EventId: string, client : Client) : Promise<void> {
-    const storedEvent = await EventSchema.findOne({ EventId }) as GnEventData;
+    const storedEvent = await EventSchema.findById(EventId ) as GnEventData;
     if(!storedEvent) throw Error(`Could not find event of id ${EventId}`);
     if(storedEvent.Status !== "Active" ) throw Error("Event to cancel has to be of status\"Active\"!");
 
-    await EventSchema.updateOne({ EventId }, {$set: {
+    await EventSchema.updateOne({ _id: EventId }, {$set: {
         Status: GnEventStatus.Completed
     }});
 
@@ -49,7 +49,7 @@ export async function completeEvent(EventId: string, client : Client) : Promise<
 
 export async function startEvent(EventId: string, client : Client) : Promise<void> {
     // Get event data from the database
-    const storedEvent  = await EventSchema.findOne({ EventId }) as GnEventData ;
+    const storedEvent  = await EventSchema.findById(EventId) as GnEventData ;
     if(!storedEvent) throw Error(`Failed to start event: Event ${EventId} does not excist!`);
     if(storedEvent.Status !== "Scheduled") throw Error(`Failed to start event: Event ${EventId} is not of status Scheduled!`);
 
@@ -69,7 +69,7 @@ export async function startEvent(EventId: string, client : Client) : Promise<voi
         }
     }
 
-    await EventSchema.updateOne({ EventId }, { $set: {Status: GnEventStatus.Active} });
+    await EventSchema.updateOne({ _id: EventId }, { $set: {Status: GnEventStatus.Active} });
 
     // Start the Server Event
     try {

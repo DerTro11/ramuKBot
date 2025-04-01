@@ -8,7 +8,7 @@ const HostCmds = ["cancel", "edit", "mute", "end", "start"] // Buttons which can
 async function execute(interaction : Interaction){
     interaction = interaction as ButtonInteraction;
     const [, Action ,EventId] = interaction.customId.split("_");
-        const EventData : GnEventData | null = await EventSchema.findOne({ EventId });
+        const EventData : GnEventData | null = await EventSchema.findById(EventId);
     
         if (!EventData) {
             interaction.reply({ content: "⚠️ Event not found.", ephemeral: true });
@@ -53,7 +53,7 @@ function ListUsersFromArray(UserArray : string[]){
 
 async function pressStartEvent(interaction: ButtonInteraction, EventData: GnEventData) {
     try {
-        await startEvent(EventData.EventId, interaction.client)
+        await startEvent(EventData._id.toString(), interaction.client)
         await interaction.reply({ content: "✅ Event started successfully.", ephemeral: true });
     } catch (err) {
         await interaction.reply({ content: "❌ Failed to start event.", ephemeral: true });
@@ -63,7 +63,7 @@ async function pressStartEvent(interaction: ButtonInteraction, EventData: GnEven
 
 
 async function cancelEvent(interaction: ButtonInteraction, EventData: GnEventData) {
-    await EventSchema.updateOne({ EventId: EventData.EventId }, {$set: {
+    await EventSchema.updateOne({ _id: EventData._id.toString() }, {$set: {
         Status: GnEventStatus.Cancelled
     }});
     
@@ -85,7 +85,7 @@ async function cancelEvent(interaction: ButtonInteraction, EventData: GnEventDat
 
 async function editEvent(interaction: ButtonInteraction, EventData: GnEventData) {
     const modal = new ModalBuilder()
-        .setCustomId(`changeGameModal_${EventData.EventId}`)
+        .setCustomId(`changeGameModal_${EventData._id.toString()}`)
         .setTitle("Change Game Information");
 
     const gameInput = new TextInputBuilder()
@@ -117,15 +117,16 @@ async function editEvent(interaction: ButtonInteraction, EventData: GnEventData)
 
     await interaction.showModal(modal);
 
-    interaction.awaitModalSubmit({filter: (interaction) => interaction.customId === `changeGameModal_${EventData.EventId}`, time: 300_000})
+    interaction.awaitModalSubmit({filter: (interaction) => interaction.customId === `changeGameModal_${EventData._id.toString()}`, time: 300_000})
     .then(handleModalSubmission)
 }
 
 async function handleModalSubmission(interaction: ModalSubmitInteraction) {
     if (!interaction.customId.startsWith("changeGameModal_")) return;
 
-    const EventId = interaction.customId.split("_")[1];
-    const ServerEvent = interaction.guild?.scheduledEvents.cache.get(EventId);
+    const EventData = await EventSchema.findById(interaction.customId.split("_")[1]);
+    if(!EventData) return;
+    const ServerEvent = interaction.guild?.scheduledEvents.cache.get( EventData?.ServerEventID );
 
     const newGameInput = interaction.fields.getTextInputValue("newGameName");
     const newDescInput =  interaction.fields.getTextInputValue("newEventDesc");
@@ -149,7 +150,7 @@ async function handleModalSubmission(interaction: ModalSubmitInteraction) {
     if (newEndDate) updateFields.ScheduledEndAt = newEndDate;
 
     if (Object.keys(updateFields).length > 0) {
-        await EventSchema.updateOne({ EventId }, { $set: updateFields });
+        await EventSchema.updateOne({ _id: EventData._id.toString() }, { $set: updateFields });
         const discordTimestamp = (newDate && `<t:${Math.floor(newDate.getTime() / 1000)}:F>`) || undefined;
         const discordEndTimestamp = (newEndDate && `<t:${Math.floor(newEndDate.getTime() / 1000)}:F>`) || undefined;
 
@@ -189,7 +190,7 @@ async function muteVC(interaction: ButtonInteraction, EventData: GnEventData, Se
 }
 
 async function endEvent(interaction: ButtonInteraction, EventData: GnEventData) {
-    await EventSchema.updateOne({ EventId: EventData.EventId }, {$set: {
+    await EventSchema.updateOne({ _id: EventData._id.toString() }, {$set: {
         Status: GnEventStatus.Completed
     }});
     const guild = interaction.guild;
@@ -201,7 +202,7 @@ async function endEvent(interaction: ButtonInteraction, EventData: GnEventData) 
 
 async function GNhandleRSVP(interaction: ButtonInteraction, action: string, eventId: string) {
     try {
-        const event = await EventSchema.findOne({ EventId: eventId });
+        const event = await EventSchema.findById(eventId);
         if (!event) {
             await interaction.reply({ content: "This event no longer exists.", ephemeral: true });
             return;

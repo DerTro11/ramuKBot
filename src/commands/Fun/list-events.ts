@@ -47,7 +47,7 @@ export const Cmd: Command = {
                     { name: "Host", value: `<@${event.HostDCId}>` },
                     { name: "Game", value: event.InfGame }
                 )
-                .setFooter({ text: `Event ID: ${event.EventId}` }) // | Listed on ${now.toDateString()}
+                .setFooter({ text: `Event ID: ${event._id.toString()}` }) // | Listed on ${now.toDateString()}
                 .setTimestamp(new Date())
                 .setColor(HexColors[event.Status] || 0x000000);
             return embed;
