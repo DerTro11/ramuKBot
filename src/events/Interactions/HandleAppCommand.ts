@@ -6,18 +6,18 @@ import path from "path";
 
 const commandMap = new Map<string, Command>(); // Map for pre-loading commands, and saving them for later to improve load time. 
 
-const commandFolders = readdirSync("./src/commands");
+const commandFolders = readdirSync( path.resolve(__dirname, `../../commands`) );
 for (const folder of commandFolders) {
-    if (folder.endsWith(".ts")) continue; // Make sure to skip non Folders
-
-    const commandFiles = readdirSync(`./src/commands/${folder}`);
+    if ( folder.endsWith(".ts") || folder.endsWith(".js")) continue; // Make sure to skip non Folders
+    const commandFiles = readdirSync( path.resolve(__dirname, `../../commands/${folder}` ));
     for (const file of commandFiles) {
-        if (!file.endsWith(".ts")) continue; 
+        if ( !file.endsWith(".ts") && !file.endsWith(".js") ) continue; 
 
-        const command: Command = require(path.resolve(__dirname, `../../../src/commands/${folder}/${file}`)).Cmd;
-        commandMap.set(file.replace(".ts", ""), command);
+        const command: Command = require(path.resolve(__dirname, `../../commands/${folder}/${file.split(".")[0] }`)).Cmd;
+        commandMap.set( file.split(".")[0]  , command);
     }
 }
+
 
 function execute(interaction: Interaction) {
     if (!interaction.isChatInputCommand()) return;
@@ -31,4 +31,4 @@ const exp : AppInteraction = {
 }
 
 
-export default exp
+export default exp;

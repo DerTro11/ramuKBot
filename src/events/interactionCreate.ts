@@ -5,11 +5,12 @@ import path from "path";
 
 const interactionModules = new Map<string, AppInteraction>(); // Map for saving AppInteractions for later use, to improve load time.
 
-const eventFiles = readdirSync("./src/events/Interactions");
+
+const eventFiles = readdirSync(path.resolve(__dirname, "Interactions"));
 for (const file of eventFiles) {
-    if (!file.toLowerCase().endsWith(".ts")) continue;
+    if ( !file.toLowerCase().endsWith(".ts") && !file.toLowerCase().endsWith(".js") ) continue;
     const eventName = file.split(".")[0]; // Remove file extension
-    const interaction: AppInteraction = require(path.resolve(__dirname, `../events/Interactions/${file}`)).default;
+    const interaction: AppInteraction = require(path.resolve(__dirname, `../events/Interactions/${eventName}`)).default;
     
     interactionModules.set(eventName, interaction);
 }

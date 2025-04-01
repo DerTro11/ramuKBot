@@ -1,6 +1,7 @@
 
 import {REST, Routes, RESTPostAPIApplicationCommandsJSONBody} from 'discord.js';
 import { readdirSync } from 'fs';
+import path from 'path';
 import { Command } from 'types';
 
 require('dotenv').config();
@@ -12,17 +13,17 @@ function LoadCMDs() : RESTPostAPIApplicationCommandsJSONBody[]{
     const Commands : RESTPostAPIApplicationCommandsJSONBody[]  = [];
     console.log("Attempting to load commands to array...")
 
-    const CommandDirs = readdirSync('./src/Commands')
+    const CommandDirs = readdirSync(__dirname)
     CommandDirs.forEach((CommandDir) => {
-        if(CommandDir.endsWith('.ts')) return;
+        if( CommandDir.endsWith('.ts') || CommandDir.endsWith('.js')) return;
 
-        const CommandFiles = readdirSync(`./src/Commands/${CommandDir}`)
+        const CommandFiles = readdirSync( path.resolve(__dirname, CommandDir) );
         
         if(!CommandFiles || !CommandFiles.length || CommandFiles.length === 0) return;
 
         CommandFiles.forEach((FileName) =>{
             try{
-                const command : Command = require(`./${CommandDir}/${FileName}`).Cmd
+                const command : Command = require(`./${CommandDir}/${FileName.split(".")[0]}`).Cmd
                 if (!command.CommandBody) throw Error("Command body is missing!");
 
                 Commands.push( command.CommandBody.toJSON() ) 
