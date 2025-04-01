@@ -8,19 +8,20 @@ const HostCmds = ["cancel", "edit", "mute", "end", "start"] // Buttons which can
 async function execute(interaction : Interaction){
     interaction = interaction as ButtonInteraction;
     const [, Action ,EventId] = interaction.customId.split("_");
+        
+    try{
         const EventData : GnEventData | null = await EventSchema.findById(EventId);
-    
+        
         if (!EventData) {
             interaction.reply({ content: "⚠️ Event not found.", ephemeral: true });
             return;
         }
-    
+        
         if (EventData.HostDCId !== interaction.user.id && HostCmds.find( (element) => element === Action )) {
             interaction.reply({ content: "🚫 You are not the host of this event.", ephemeral: true });
             return;
         }
-        
-        
+
         if (interaction.customId.startsWith("event_cancel"))            cancelEvent(interaction, EventData);
         else if (interaction.customId.startsWith("event_edit"))         editEvent(interaction, EventData);
         else if (interaction.customId.startsWith("event_mute"))         muteVC(interaction, EventData);
@@ -31,6 +32,12 @@ async function execute(interaction : Interaction){
         else if (interaction.customId.startsWith("event_accept"))       GNhandleRSVP(interaction, Action, EventId);
         else if (interaction.customId.startsWith("event_unsure"))       GNhandleRSVP(interaction, Action, EventId);
         else if (interaction.customId.startsWith("event_decline"))      GNhandleRSVP(interaction, Action, EventId);
+
+    }catch(err){
+        interaction.reply({ content: "A fatal error occured!", ephemeral: true });
+        return;
+    }
+    
 }
 
 
