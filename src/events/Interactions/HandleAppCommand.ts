@@ -19,10 +19,33 @@ for (const folder of commandFolders) {
 }
 
 
-function execute(interaction: Interaction) {
+async function execute(interaction: Interaction) {
     if (!interaction.isChatInputCommand()) return;
     const command = commandMap.get(interaction.commandName);
-    if (command) command.execute(interaction as ChatInputCommandInteraction);
+    if (command){ 
+        try{
+            if(command.execute.constructor.name  === "Function") command.execute(interaction as ChatInputCommandInteraction);
+            else if(command.execute.constructor.name  === "AsyncFunction") await command.execute(interaction as ChatInputCommandInteraction);
+        }catch(err){
+            console.error(`❌ Error executing command "${interaction.commandName}":`, err);
+
+            // Check if the interaction was already replied to or deferred
+            if (interaction.replied || interaction.deferred) {
+                interaction.followUp({
+                    content: "⚠️ An unexpected error occurred while executing this command.",
+                    ephemeral: true
+                }).catch(console.error);
+            } else {
+                interaction.reply({
+                    content: "⚠️ An unexpected error occurred while executing this command.",
+                    ephemeral: true
+                }).catch(console.error);
+            }
+        }
+    }
+    else{
+        interaction.reply(`Error: Command "${interaction.commandName}" not found!\nPlease report this message to a developer!`)
+    }
 }
 
 const exp : AppInteraction = {

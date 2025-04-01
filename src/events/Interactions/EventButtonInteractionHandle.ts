@@ -34,7 +34,7 @@ async function execute(interaction : Interaction){
         else if (interaction.customId.startsWith("event_decline"))      GNhandleRSVP(interaction, Action, EventId);
 
     }catch(err){
-        interaction.reply({ content: "A fatal error occured!", ephemeral: true });
+        interaction.reply({ content: "An error occured!", ephemeral: true });
         return;
     }
     
