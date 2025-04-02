@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 
 const GameNightSchema = new mongoose.Schema({
+    GuildId: { type: String, required: true },
     HostDCId: { type: String, required: true },
     ServerEventID: { type: String, required: true },
     InfGame: { type: String, required: true },

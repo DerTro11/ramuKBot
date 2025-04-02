@@ -6,6 +6,7 @@ import DeployCommands from "../DeployCommands";
 const CommandBody = new SlashCommandBuilder()
     .setName("update-commands")
     .setDescription("Updates bot slash commands.")
+    .setContexts([0])
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
     

@@ -22,6 +22,7 @@ export interface AppInteraction{
 export interface GnEventData {
     _id: { toString: () => string},
     //EventId: string,
+    GuildId: string,
     HostDCId: string,
     ServerEventID: string,
     InfGame: string,
