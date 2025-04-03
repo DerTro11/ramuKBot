@@ -24,8 +24,9 @@ async function execute(interaction: Interaction) {
     const command = commandMap.get(interaction.commandName);
     if (command){ 
         try{
-            if(command.execute.constructor.name  === "Function") command.execute(interaction as ChatInputCommandInteraction);
-            else if(command.execute.constructor.name  === "AsyncFunction") await command.execute(interaction as ChatInputCommandInteraction);
+            //if(command.execute.constructor.name  === "Function") command.execute(interaction as ChatInputCommandInteraction);
+            //else if(command.execute.constructor.name  === "AsyncFunction") 
+            await command.execute(interaction as ChatInputCommandInteraction);
         }catch(err){
             console.error(`❌ Error executing command "${interaction.commandName}":`, err);
 
