@@ -1,8 +1,7 @@
 import AppConfig from "../../../AppConfig";
 import EventSchema from "../../../MongoDB/models/GameNight";
-import { Client, GuildScheduledEventStatus } from "discord.js";
+import { Client } from "discord.js";
 import { startEvent, completeEvent, cancelEvent } from "../../../Services/EventService";
-import { GnEventData, GnEventStatus } from "../../../types";
 
 export default async function checkEvents(client : Client) {
 
