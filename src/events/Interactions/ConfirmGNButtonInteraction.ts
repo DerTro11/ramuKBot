@@ -73,22 +73,22 @@ async function handleGameNightConfirmation(interaction: ButtonInteraction) {
         const announcementChannel = interaction.guild.channels.cache.get(AppConfig.GameNightAnnoucmentChnlId) as TextChannel; // Replace with actual channel ID
         if (announcementChannel) {
             const acceptButton = new ButtonBuilder()
-                .setCustomId(`event_accept_${serverEvent.id}`)
+                .setCustomId(`event_accept_${gameNight._id.toString()}`)
                 .setLabel("✅ Accept")
                 .setStyle(ButtonStyle.Success);
 
             const unsureButton = new ButtonBuilder()
-                .setCustomId(`event_unsure_${serverEvent.id}`)
+                .setCustomId(`event_unsure_${gameNight._id.toString()}`)
                 .setLabel("🤔 Unsure")
                 .setStyle(ButtonStyle.Primary);
 
             const declineButton = new ButtonBuilder()
-                .setCustomId(`event_decline_${serverEvent.id}`)
+                .setCustomId(`event_decline_${gameNight._id.toString()}`)
                 .setLabel("❌ Decline")
                 .setStyle(ButtonStyle.Danger);
                 
             const showReactedButton = new ButtonBuilder()
-                .setCustomId(`event_reactedusrs_${serverEvent.id}`)
+                .setCustomId(`event_reactedusrs_${gameNight._id.toString()}`)
                 .setLabel("Show reacted members 👥")
                 .setStyle(ButtonStyle.Secondary);
 

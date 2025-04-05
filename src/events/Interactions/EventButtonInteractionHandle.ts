@@ -165,7 +165,7 @@ async function handleModalSubmission(interaction: ModalSubmitInteraction) {
         if (newDesc) ServerEvent?.setDescription(newDesc);
 
         await interaction.reply({
-            content: `✅ Game information updated successfully.\nNew game: **${newGame + " ✅" || "Not updated ❌"}**\nNew additional information: **${newDesc + " ✅" || "Not updated ❌"}**\nNew date: **${discordTimestamp + " ✅" || "Not updated ❌" }**\nNew date: **${discordEndTimestamp + " ✅" || "Not updated ❌" }**`,
+            content: `✅ Game information updated successfully.\nNew game: **${(newGame && newGame + " ✅" )|| "Not updated ❌"}**\nNew additional information: **${(newDesc && newDesc + " ✅" )|| "Not updated ❌"}**\nNew date: **${(discordTimestamp && discordTimestamp + " ✅") || "Not updated ❌" }**\nNew date: **${(discordEndTimestamp && discordEndTimestamp + " ✅") || "Not updated ❌" }**`,
             ephemeral: true
         });
     } else {
