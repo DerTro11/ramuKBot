@@ -1,6 +1,6 @@
 import {AppInteraction, GnEventData, GnEventStatus} from "../../types";
 import { ButtonInteraction, Interaction, GuildMember, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, ModalSubmitInteraction, GuildScheduledEventStatus } from "discord.js";
-import { startEvent } from "../../Services/EventService";
+import {startEvent, cancelEvent, completeEvent} from "../../Services/EventService";
 import EventSchema from "../../MongoDB/models/GameNight"; 
 
 const HostCmds = ["cancel", "edit", "mute", "end", "start"] // Buttons which can only be pressed by a host
@@ -22,11 +22,11 @@ async function execute(interaction : Interaction){
             return;
         }
 
-        if (interaction.customId.startsWith("event_cancel"))            cancelEvent(interaction, EventData);
+        if (interaction.customId.startsWith("event_cancel"))            pressCancelEvent(interaction, EventData);
         else if (interaction.customId.startsWith("event_edit"))         editEvent(interaction, EventData);
         else if (interaction.customId.startsWith("event_mute"))         muteVC(interaction, EventData);
         else if (interaction.customId.startsWith("event_unmute"))       muteVC(interaction, EventData, false);
-        else if (interaction.customId.startsWith("event_end"))          endEvent(interaction, EventData);
+        else if (interaction.customId.startsWith("event_end"))          pressEndEvent(interaction, EventData);
         else if (interaction.customId.startsWith("event_start"))        pressStartEvent(interaction, EventData);
         else if (interaction.customId.startsWith("event_reactedusrs"))  listReactedUsers(interaction, EventData);
         else if (interaction.customId.startsWith("event_accept"))       GNhandleRSVP(interaction, Action, EventId);
@@ -69,25 +69,13 @@ async function pressStartEvent(interaction: ButtonInteraction, EventData: GnEven
 }
 
 
-async function cancelEvent(interaction: ButtonInteraction, EventData: GnEventData) {
-    await EventSchema.updateOne({ _id: EventData._id.toString() }, {$set: {
-        Status: GnEventStatus.Cancelled
-    }});
-    
-
-    const guild = interaction.guild;
-    const discordEvent = guild?.scheduledEvents.cache.get(EventData.ServerEventID);
-    if (discordEvent) await discordEvent.setStatus(GuildScheduledEventStatus.Canceled)
-
-    // Notify users who accepted
-    const acceptedUsers = EventData.ReactedUsers.Users_Accept || [];
-    const EventTimestamp = `<t:${Math.floor(EventData.ScheduledAt.getTime() / 1000)}:F>`
-    for (const userId of acceptedUsers) {
-        const user = await interaction.client.users.fetch(userId).catch(() => null);
-        if (user) user.send(`❌ The ${EventData.InfGame} Game Night event at the ${EventTimestamp} from <@${EventData.HostDCId}> has been cancelled.`);
+async function pressCancelEvent(interaction: ButtonInteraction, EventData: GnEventData) {
+    try{
+        await cancelEvent(EventData._id.toString(), interaction.client)
+        await interaction.reply({ content: "✅ Event cancelled successfully.", ephemeral: true });
+    }catch(err){
+        await interaction.reply({ content: "❌ Event cancellation failed.", ephemeral: true });
     }
-
-    await interaction.reply({ content: "✅ Event cancelled successfully.", ephemeral: true });
 }
 
 async function editEvent(interaction: ButtonInteraction, EventData: GnEventData) {
@@ -196,7 +184,7 @@ async function muteVC(interaction: ButtonInteraction, EventData: GnEventData, Se
     await interaction.reply({ content: "🔇 All members in the event VC have been mute toggled.", ephemeral: true });
 }
 
-async function endEvent(interaction: ButtonInteraction, EventData: GnEventData) {
+async function pressEndEvent(interaction: ButtonInteraction, EventData: GnEventData) {
     await EventSchema.updateOne({ _id: EventData._id.toString() }, {$set: {
         Status: GnEventStatus.Completed
     }});
