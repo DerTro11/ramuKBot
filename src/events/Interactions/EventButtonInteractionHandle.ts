@@ -181,18 +181,16 @@ async function muteVC(interaction: ButtonInteraction, EventData: GnEventData, Se
         }
     }
 
-    await interaction.reply({ content: "🔇 All members in the event VC have been mute toggled.", ephemeral: true });
+    await interaction.reply({ content: `🔇 All members in the event VC have been ${SetMute ? "muted" : "unmuted"}.`, ephemeral: true });
 }
 
 async function pressEndEvent(interaction: ButtonInteraction, EventData: GnEventData) {
-    await EventSchema.updateOne({ _id: EventData._id.toString() }, {$set: {
-        Status: GnEventStatus.Completed
-    }});
-    const guild = interaction.guild;
-    const discordEvent = guild?.scheduledEvents.cache.get(EventData.ServerEventID);
-    if (discordEvent) await discordEvent.setStatus(GuildScheduledEventStatus.Completed);
-
-    await interaction.reply({ content: "✅ Event ended.", ephemeral: true });
+    try{
+        await completeEvent(EventData._id.toString(), interaction.client);
+        await interaction.reply({ content: "✅ Event ended.", ephemeral: true });
+    }catch(err){
+        await interaction.reply({ content: "❌ Event cancellation failed.", ephemeral: true });
+    }
 }
 
 async function GNhandleRSVP(interaction: ButtonInteraction, action: string, eventId: string) {
