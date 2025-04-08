@@ -189,7 +189,7 @@ async function pressEndEvent(interaction: ButtonInteraction, EventData: GnEventD
         await completeEvent(EventData._id.toString(), interaction.client);
         await interaction.reply({ content: "✅ Event ended.", ephemeral: true });
     }catch(err){
-        await interaction.reply({ content: "❌ Event cancellation failed.", ephemeral: true });
+        await interaction.reply({ content: "❌ Failed to end event.", ephemeral: true });
     }
 }
 
