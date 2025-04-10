@@ -68,13 +68,21 @@ async function pressStartEvent(interaction: ButtonInteraction, EventData: GnEven
     }
 }
 
-
 async function pressCancelEvent(interaction: ButtonInteraction, EventData: GnEventData) {
     try{
         await cancelEvent(EventData._id.toString(), interaction.client)
         await interaction.reply({ content: "✅ Event cancelled successfully.", ephemeral: true });
     }catch(err){
         await interaction.reply({ content: "❌ Event cancellation failed.", ephemeral: true });
+    }
+}
+
+async function pressEndEvent(interaction: ButtonInteraction, EventData: GnEventData) {
+    try{
+        await completeEvent(EventData._id.toString(), interaction.client);
+        await interaction.reply({ content: "✅ Event ended.", ephemeral: true });
+    }catch(err){
+        await interaction.reply({ content: "❌ Failed to end event.", ephemeral: true });
     }
 }
 
@@ -184,14 +192,7 @@ async function muteVC(interaction: ButtonInteraction, EventData: GnEventData, Se
     await interaction.reply({ content: `🔇 All members in the event VC have been ${SetMute ? "muted" : "unmuted"}.`, ephemeral: true });
 }
 
-async function pressEndEvent(interaction: ButtonInteraction, EventData: GnEventData) {
-    try{
-        await completeEvent(EventData._id.toString(), interaction.client);
-        await interaction.reply({ content: "✅ Event ended.", ephemeral: true });
-    }catch(err){
-        await interaction.reply({ content: "❌ Failed to end event.", ephemeral: true });
-    }
-}
+
 
 async function GNhandleRSVP(interaction: ButtonInteraction, action: string, eventId: string) {
     try {
