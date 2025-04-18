@@ -1,44 +1,37 @@
 import { ButtonInteraction, GuildScheduledEventCreateOptions, TextChannel, ButtonBuilder, ActionRowBuilder, ButtonStyle, Interaction, ChatInputCommandInteraction } from "discord.js";
-import AppConfig from "../../AppConfig";
-import { AppInteraction } from "../../types";
-import GameNight from "../../MongoDB/models/GameNight";
+import GameNight from "../MongoDB/models/GameNight"
+import GuildConfigs from "MongoDB/models/GuildConfig";
 
 
-async function execute(interaction : Interaction) {
-    if(!interaction.isButton()) return;
-    if (interaction.customId === "confirm_gamenight") {
-        await handleGameNightConfirmation(interaction);
-    } else if (interaction.customId === "cancel_gamenight") {
-        await interaction.update({
-            content: "❌ **Game Night creation cancelled.**",
-            components: []
-        });
-    }
-}
 
 
-async function handleGameNightConfirmation(/*appCommandInteraction: ChatInputCommandInteraction,*/ buttonInteraction: ButtonInteraction) {
+export default async function(appCommandInteraction: ChatInputCommandInteraction, buttonInteraction: ButtonInteraction) {
     if (!buttonInteraction.guild) {
         await buttonInteraction.reply({ content: "This command must be used in a server!", ephemeral: true });
         return;
     }
 
     // Retrieve event details from the original message
-    const [ , dateLine, gameinfo, infoLine, endDateLine] = buttonInteraction.message.content.split("\n").filter(line => line.includes("**"));
-    const game = gameinfo.split("**")[2].trim();
-    const timestampMatch = dateLine.match(/<t:(\d+):F>/);
-    const endtimestampMatch = endDateLine.match(/<t:(\d+):F>/);
-    if (!timestampMatch || !endtimestampMatch) {
-        await buttonInteraction.reply({ content: "Error parsing event date.", ephemeral: true });
+    const game = appCommandInteraction.options.getString("game", true);
+    const dateString = appCommandInteraction.options.getString("date", true);
+    const endDateString = appCommandInteraction.options.getString("end-time", true);
+    const additionalInfo = appCommandInteraction.options.getString("info") || "No additional info provided.";
+    const eventVCChnl = appCommandInteraction.options.getChannel("channel");
+
+    const guildConfig = await GuildConfigs.findOne({GuildId: buttonInteraction.guild.id});
+
+    const eventDate = new Date(dateString);
+    const eventEndDate = new Date(endDateString)
+
+    const eventTimestamp = Math.floor(eventDate.getTime()) * 1000; // Convert to milliseconds
+
+    const hostId = buttonInteraction.user.id;
+
+    if(!guildConfig){
+        await buttonInteraction.update("Error: Could not find Guild config!")
         return;
     }
 
-    const eventTimestamp = parseInt(timestampMatch[1]) * 1000; // Convert to milliseconds
-    const eventendTimestamp = parseInt(endtimestampMatch[1]) * 1000;
-    const eventDate = new Date(eventTimestamp);
-    const eventEndDate = new Date(eventendTimestamp)
-    const additionalInfo = infoLine.split("**")[2].trim();
-    const hostId = buttonInteraction.user.id;
 
     try {
         // Create a Discord Server Event
@@ -48,12 +41,13 @@ async function handleGameNightConfirmation(/*appCommandInteraction: ChatInputCom
             privacyLevel: 2, // Guild Only
             entityType: 2, // Voice Event
             description: additionalInfo,
-            channel: AppConfig.GameNightVCId // Replace with actual voice channel ID
+            channel: eventVCChnl?.id // Replace with actual voice channel ID
         } as GuildScheduledEventCreateOptions);
 
         // Save to MongoDB
         const gameNight = new GameNight({
             GuildId: buttonInteraction.guild.id,
+            VCChnlId: eventVCChnl?.id,
             HostDCId: hostId,
             ServerEventID: serverEvent.id,
             InfGame: game,
@@ -66,11 +60,11 @@ async function handleGameNightConfirmation(/*appCommandInteraction: ChatInputCom
                 Users_Decline: []
             }
         });
-
+        
         await gameNight.save();
 
         // Announce in predefined text channel
-        const announcementChannel = buttonInteraction.guild.channels.cache.get(AppConfig.GameNightAnnoucmentChnlId) as TextChannel; // Replace with actual channel ID
+        const announcementChannel = buttonInteraction.guild.channels.cache.get(guildConfig?.ShoutChnlID) as TextChannel; // Replace with actual channel ID
         if (announcementChannel) {
             const acceptButton = new ButtonBuilder()
                 .setCustomId(`event_accept_${gameNight._id.toString()}`)
@@ -96,10 +90,13 @@ async function handleGameNightConfirmation(/*appCommandInteraction: ChatInputCom
 
             const eventDurationMin : number = (eventEndDate.valueOf() - eventDate.valueOf()) / 1000 / 60;
 
-            await announcementChannel.send({
+            const ShoutMsg = await announcementChannel.send({
                 content: `@everyone\n# 🎉 **Game Night Scheduled!** 🎉\n\n📅 **Date:** <t:${eventTimestamp / 1000}:F>\n⏱️ **Duration: ${eventDurationMin} Minutes** \n🎮 **Game:** ${game}\nℹ️ **Info:** ${additionalInfo}\n👑 **Host:** <@${hostId}>\n\n[Join Event](https://discord.com/events/${buttonInteraction.guild.id}/${serverEvent.id})`,
                 components: [actionRow]
             });
+
+            gameNight.ShoutMsgId = ShoutMsg.id;
+            gameNight.save();
         }
 
         await buttonInteraction.update({
@@ -113,11 +110,3 @@ async function handleGameNightConfirmation(/*appCommandInteraction: ChatInputCom
     }
 }
 
-
-const exp : AppInteraction = {
-    Execute: execute,
-    InteractionFilter: (Interaction : Interaction) => Interaction.isButton() && (Interaction.customId.startsWith("confirm_gamenight") || Interaction.customId.startsWith("cancel_gamenight"))
-}
-
-
-export default exp;

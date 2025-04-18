@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, ClientEvents, ChatInputCommandInteraction, Interaction} from "discord.js"
-import { ObjectId } from "mongoose";
+
 
 export interface Command {
     CommandBody:  SlashCommandBuilder,
@@ -21,8 +21,9 @@ export interface AppInteraction{
 
 export interface GnEventData {
     _id: { toString: () => string},
-    //EventId: string,
     GuildId: string,
+    VCChnlId: string,
+    ShoutMsgId: string | null,
     HostDCId: string,
     ServerEventID: string,
     InfGame: string,

@@ -2,6 +2,8 @@ import mongoose from "mongoose";
 
 const GameNightSchema = new mongoose.Schema({
     GuildId: { type: String, required: true },
+    VCChnlId: { type: String, required: true },
+    ShoutMsgId: { type: mongoose.Schema.Types.Mixed, required: false },
     HostDCId: { type: String, required: true },
     ServerEventID: { type: String, required: true },
     InfGame: { type: String, required: true },
@@ -18,6 +20,6 @@ const GameNightSchema = new mongoose.Schema({
         enum: ["Scheduled", "Cancelled", "Completed", "Active"],
         default: "Scheduled"
     }
-}, { collection: "StoredEvents" });
+}, { collection: "StoredEvents", versionKey: false });
 
 export default  mongoose.model("GameNightEvent", GameNightSchema);
