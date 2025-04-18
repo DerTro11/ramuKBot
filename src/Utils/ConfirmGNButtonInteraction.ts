@@ -1,6 +1,6 @@
 import { ButtonInteraction, GuildScheduledEventCreateOptions, TextChannel, ButtonBuilder, ActionRowBuilder, ButtonStyle, Interaction, ChatInputCommandInteraction } from "discord.js";
 import GameNight from "../MongoDB/models/GameNight"
-import GuildConfigs from "MongoDB/models/GuildConfig";
+import GuildConfigs from "../MongoDB/models/GuildConfig";
 
 
 
