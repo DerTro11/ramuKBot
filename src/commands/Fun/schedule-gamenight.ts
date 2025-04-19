@@ -41,10 +41,10 @@ export const Cmd: Command = {
         const endDateString = Interaction.options.getString("end-time", true);
         const additionalInfo = Interaction.options.getString("info") || "No additional info provided.";
         const eventVCChnl = Interaction.options.getChannel("channel");
-        const guildConfig = await GuildConfigs.findOne({ GuildId: Interaction.guild?.id});
+        const guildConfig = await GuildConfigs.findOne({ GuildID: Interaction.guild?.id});
 
         if(!guildConfig){
-            await Interaction.reply("Error: Could not find Guild config!")
+            await Interaction.reply({content: "Error: Could not find Guild config!", ephemeral: true})
             return;
         }
 
@@ -73,7 +73,7 @@ export const Cmd: Command = {
         }
 
         // Validate the channel
-        if(eventVCChnl?.type === ChannelType.GuildVoice){
+        if(eventVCChnl?.type !== ChannelType.GuildVoice){
             await Interaction.reply({ content: "Invalid channel type! Please make sure the channel is a voice channel.", ephemeral: true });
             return;
         }

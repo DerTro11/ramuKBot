@@ -18,7 +18,7 @@ export default async function(appCommandInteraction: ChatInputCommandInteraction
     const additionalInfo = appCommandInteraction.options.getString("info") || "No additional info provided.";
     const eventVCChnl = appCommandInteraction.options.getChannel("channel");
 
-    const guildConfig = await GuildConfigs.findOne({GuildId: buttonInteraction.guild.id});
+    const guildConfig = await GuildConfigs.findOne({GuildID: buttonInteraction.guild.id});
 
     const eventDate = new Date(dateString);
     const eventEndDate = new Date(endDateString)
@@ -48,6 +48,7 @@ export default async function(appCommandInteraction: ChatInputCommandInteraction
         const gameNight = new GameNight({
             GuildId: buttonInteraction.guild.id,
             VCChnlId: eventVCChnl?.id,
+            ShoutMsgId: null,
             HostDCId: hostId,
             ServerEventID: serverEvent.id,
             InfGame: game,
