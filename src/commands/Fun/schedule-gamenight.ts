@@ -1,6 +1,7 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, ComponentType, ButtonInteraction, ChannelType } from "discord.js";
 import { Command } from "types";
-import handleGameNightConfirmation from "../../Utils/ConfirmGNButtonInteraction"
+import handleGameNightConfirmation from "../../Utils/ConfirmGN"
+import GuildConfigs from "../../MongoDB/models/GuildConfig";
 
 const CommandBody = new SlashCommandBuilder()
     .setName("schedule-gamenight")
@@ -40,6 +41,12 @@ export const Cmd: Command = {
         const endDateString = Interaction.options.getString("end-time", true);
         const additionalInfo = Interaction.options.getString("info") || "No additional info provided.";
         const eventVCChnl = Interaction.options.getChannel("channel");
+        const guildConfig = await GuildConfigs.findOne({ GuildId: Interaction.guild?.id});
+
+        if(!guildConfig){
+            await Interaction.reply("Error: Could not find Guild config!")
+            return;
+        }
 
         // Validate date & format
         const now = new Date()
@@ -68,6 +75,11 @@ export const Cmd: Command = {
         // Validate the channel
         if(eventVCChnl?.type === ChannelType.GuildVoice){
             await Interaction.reply({ content: "Invalid channel type! Please make sure the channel is a voice channel.", ephemeral: true });
+            return;
+        }
+
+        if(!guildConfig.EventVCIDs.find((v) => v === eventVCChnl?.id)){
+            await Interaction.reply({ content: "You cannot host an evnet in this channel.", ephemeral: true });
             return;
         }
 

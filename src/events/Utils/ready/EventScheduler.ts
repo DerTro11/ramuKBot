@@ -17,7 +17,7 @@ export default async function checkEvents(client : Client) {
 
 
         for (const event of eventsToStart) {
-            const guild = client.guilds.cache.get(AppConfig.MainGuild);
+            const guild = client.guilds.cache.get(event.GuildId);
             if (!guild) continue;
 
             // Call startEvent when the time comes
