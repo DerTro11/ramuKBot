@@ -23,7 +23,7 @@ export default async function(appCommandInteraction: ChatInputCommandInteraction
     const eventDate = new Date(dateString);
     const eventEndDate = new Date(endDateString)
 
-    const eventTimestamp = Math.floor(eventDate.getTime()) * 1000; // Convert to milliseconds
+    const eventTimestamp = Math.floor(eventDate.getTime()) / 1000; // Convert to seconds
 
     const hostId = buttonInteraction.user.id;
 
@@ -92,7 +92,7 @@ export default async function(appCommandInteraction: ChatInputCommandInteraction
             const eventDurationMin : number = (eventEndDate.valueOf() - eventDate.valueOf()) / 1000 / 60;
 
             const ShoutMsg = await announcementChannel.send({
-                content: `@everyone\n# 🎉 **Game Night Scheduled!** 🎉\n\n📅 **Date:** <t:${eventTimestamp / 1000}:F>\n⏱️ **Duration: ${eventDurationMin} Minutes** \n🎮 **Game:** ${game}\nℹ️ **Info:** ${additionalInfo}\n👑 **Host:** <@${hostId}>\n\n[Join Event](https://discord.com/events/${buttonInteraction.guild.id}/${serverEvent.id})`,
+                content: `@everyone\n# 🎉 **Game Night Scheduled!** 🎉\n\n📅 **Date:** <t:${eventTimestamp}:F>\n⏱️ **Duration: ${eventDurationMin} Minutes** \n🎮 **Game:** ${game}\nℹ️ **Info:** ${additionalInfo}\n👑 **Host:** <@${hostId}>\n\n[Join Event](https://discord.com/events/${buttonInteraction.guild.id}/${serverEvent.id})`,
                 components: [actionRow]
             });
 
@@ -101,7 +101,7 @@ export default async function(appCommandInteraction: ChatInputCommandInteraction
         }
 
         await buttonInteraction.update({
-            content: `✅ **Game Night confirmed!** Event created for <t:${eventTimestamp / 1000}:F>.`,
+            content: `✅ **Game Night confirmed!** Event created for <t:${eventTimestamp}:F>.`,
             components: []
         });
 
