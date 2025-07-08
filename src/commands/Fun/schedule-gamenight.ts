@@ -6,6 +6,7 @@ import GuildConfigs from "../../MongoDB/models/GuildConfig";
 const CommandBody = new SlashCommandBuilder()
     .setName("schedule-gamenight")
     .setDescription("Schedules a game night event.")
+    .setContexts([0])
     .addStringOption(option =>
         option.setName("game")
             .setDescription("The game to be played")

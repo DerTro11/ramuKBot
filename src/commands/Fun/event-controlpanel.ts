@@ -1,6 +1,5 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 import { Command } from "types";
-import { ObjectId } from "mongoose";
 import EventSchema from "../../MongoDB/models/GameNight"; // Import your MongoDB schema
 
 const CommandBody = new SlashCommandBuilder()
