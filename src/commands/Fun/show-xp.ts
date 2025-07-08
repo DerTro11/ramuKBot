@@ -17,28 +17,34 @@ export const Cmd : Command = {
     CommandBody: CommandBody,
 
     async execute(Interaction) {
-        await Interaction.deferReply({flags:  MessageFlags.Ephemeral});
+    await Interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
-        const userToFetch = Interaction.options.getUser("User") || Interaction.user;
-        const guildId = Interaction.guild?.id;
+    const userToFetch = Interaction.options.getUser("User") || Interaction.user;
+    const guildId = Interaction.guild?.id;
 
-        const userDocument = await UserData.findOne({UserId: userToFetch});
+    if (!guildId) {
+        await Interaction.editReply({
+            content: "⚠️ This command can only be used inside a server."
+        });
+        return;
+    }
 
-        if(!guildId){
-            await Interaction.editReply({content: "⚠️ Please execute this command inside a guild!"});
-            return;
-        }
+    const userDocument = await UserData.findOne({ UserId: userToFetch.id });
 
-        if(!userDocument){
-            await Interaction.editReply({content: "⚠️ Could not find user."});
-            return;
-        }
+    if (!userDocument) {
+        await Interaction.editReply({
+            content: `❌ Could not find any data for @<${userToFetch.id}>.`
+        });
+        return;
+    }
 
-        const pointAmount = userDocument.ServerXP[guildId] || 0;
-        
+    const xpAmount = userDocument.ServerXP[guildId] || 0;
 
+    await Interaction.editReply({
+        content: `📊 **XP Lookup Successful!**\n👤 **User:** @<${userToFetch.id}>\n⭐ **XP:** ${xpAmount.toLocaleString()}`
+    });
+}
 
-    },
 }
 
 export default Command
