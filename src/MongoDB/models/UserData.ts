@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { IUserData } from "types";
+import { IUserData } from "../../types";
 
 const UserData = new mongoose.Schema({
     UserId: { type: String, required: true, unique: true },

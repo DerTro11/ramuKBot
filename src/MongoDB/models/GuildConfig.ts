@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 const GuildConfigSchema = new mongoose.Schema({
-    GuildID: {type: String, required: true},
+    GuildID: {type: String, required: true, unique: true},
     ShoutChnlID: {type: String, required: true },
     EventVCIDs: {type: [String], required: true},
     

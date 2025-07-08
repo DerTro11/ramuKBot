@@ -1,13 +1,13 @@
-import { MessageFlags, SlashCommandBuilder, User } from "discord.js";
+import { MessageFlags, SlashCommandBuilder } from "discord.js";
 import { Command } from "types";
-import UserData from "MongoDB/models/UserData";
+import UserData from "./../../MongoDB/models/UserData";
 
 const CommandBody = new SlashCommandBuilder()
     .setName("show-xp")
     .setDescription("Shows the users XP.")
     .setContexts([0])
     .addUserOption(option => 
-        option.setName("User")
+        option.setName("user")
         .setDescription("The user of which you wish to view the xp of.")
         .setRequired(false)
     ) as SlashCommandBuilder;
@@ -19,7 +19,7 @@ export const Cmd : Command = {
     async execute(Interaction) {
     await Interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
-    const userToFetch = Interaction.options.getUser("User") || Interaction.user;
+    const userToFetch = Interaction.options.getUser("user") || Interaction.user;
     const guildId = Interaction.guild?.id;
 
     if (!guildId) {
