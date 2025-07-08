@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, ClientEvents, ChatInputCommandInteraction, Interaction} from "discord.js"
-
+import mongoose from "mongoose";
 
 export interface Command {
     CommandBody:  SlashCommandBuilder,
@@ -36,6 +36,14 @@ export interface GnEventData {
         Users_Decline: string[]
     }
     Status: GnEventStatus
+}
+
+export interface IUserData extends mongoose.Document {
+    _id: { toString: () => string},
+    UserId: string,
+    ServerXP: {
+        [ServerID: string]: number
+    }
 }
 
 export enum GnEventStatus {
