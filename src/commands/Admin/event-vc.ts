@@ -49,7 +49,7 @@ export const Cmd: Command = {
         const config = await GuildConfig.findOneAndUpdate(
             { GuildID: guildId },
             { $setOnInsert: { EventVCIDs: [] } },
-            { upsert: true, new: true }
+            { upsert: true, new: true, setDefaultsOnInsert: true  }
         );
 
         if (subcommand === "add") {

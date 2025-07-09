@@ -15,12 +15,14 @@ export const Cmd : Command = {
     async execute(Interaction) {
         await Interaction.deferReply();
         
-        await GuildConfig.updateOne(
+        const config = await GuildConfig.findOneAndUpdate(
             { GuildID: Interaction.guild?.id },
-            [{ $set: {EnableChatXP: { $not: "$EnableChatXP" }}}],
-            { upsert: true }
+            {}, // No update -> will only insert if missing
+            { upsert: true, new: true, setDefaultsOnInsert: true }
         );
 
+        config.EnableChatXP = !config.EnableChatXP;
+        await config.save();
 
         const updatedDoc = await GuildConfig.findOne({ GuildID: Interaction.guild?.id });
         await Interaction.editReply({content: `✅ Chat XP is now **${updatedDoc?.EnableChatXP ? "enabled" : "disabled"}**.`});

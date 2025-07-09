@@ -5,8 +5,7 @@ const UserData = new mongoose.Schema({
     UserId: { type: String, required: true, unique: true },
 
     ServerXP: {
-        type: Map,
-        of: Number,
+        type: mongoose.Schema.Types.Mixed,
         default: {}
     }
 }, { collection: "UserData", versionKey: false });
