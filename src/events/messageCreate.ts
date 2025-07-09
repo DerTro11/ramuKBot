@@ -1,10 +1,10 @@
 import {EventHandler} from "../types";
-import UserData from "MongoDB/models/UserData";
-import GuildConfig from "MongoDB/models/GuildConfig";
+import UserData from "./../MongoDB/models/UserData";
+import GuildConfig from "./../MongoDB/models/GuildConfig";
 
 const Handler : EventHandler<"messageCreate"> = {
     async on(message) {
-        if(!message.inGuild()) return;
+        if(!message.inGuild() || message.author.bot === true) return;
         
         const guildConfig = await GuildConfig.findOne({GuildID: message.guild.id})
 

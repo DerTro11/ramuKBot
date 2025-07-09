@@ -33,7 +33,7 @@ export const Cmd : Command = {
 
     if (!userDocument) {
         await Interaction.editReply({
-            content: `❌ Could not find any data for @<${userToFetch.id}>.`
+            content: `❌ Could not find any data for <@${userToFetch.id}>.`
         });
         return;
     }
@@ -41,7 +41,7 @@ export const Cmd : Command = {
     const xpAmount = userDocument.ServerXP[guildId] || 0;
 
     await Interaction.editReply({
-        content: `📊 **XP Lookup Successful!**\n👤 **User:** @<${userToFetch.id}>\n⭐ **XP:** ${xpAmount.toLocaleString()}`
+        content: `📊 **XP Lookup Successful!**\n👤 **User:** <@${userToFetch.id}>\n⭐ **XP:** ${xpAmount.toLocaleString()}`
     });
 }
 
