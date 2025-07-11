@@ -10,7 +10,7 @@ const CommandBody = new SlashCommandBuilder()
     .addSubcommand(subcmd =>
         subcmd
             .setName("add")
-            .setDescription("Add a new voice channel for event XP")
+            .setDescription("Add a new voice channel for events")
             .addChannelOption(option =>
                 option
                     .setName("channel")
@@ -22,7 +22,7 @@ const CommandBody = new SlashCommandBuilder()
     .addSubcommand(subcmd =>
         subcmd
             .setName("remove")
-            .setDescription("Remove a voice channel from the event XP list")
+            .setDescription("Remove a voice channel from the events")
             .addChannelOption(option =>
                 option
                     .setName("channel")
@@ -30,6 +30,10 @@ const CommandBody = new SlashCommandBuilder()
                     .setRequired(true)
                     .addChannelTypes(ChannelType.GuildVoice)
             )
+    ).addSubcommand(subcmd =>
+        subcmd
+            .setName("show")
+            .setDescription("Shows all voice channels with event hosting capability")
     ) as SlashCommandBuilder;
 
 export const Cmd: Command = {
@@ -38,9 +42,9 @@ export const Cmd: Command = {
         await Interaction.deferReply({ ephemeral: true });
 
         const subcommand = Interaction.options.getSubcommand();
-        const channel = Interaction.options.getChannel("channel", true);
         const guildId = Interaction.guild?.id;
-
+        
+        
         if (!guildId) {
             await Interaction.editReply("❌ This command can only be used in a server.");
             return;
@@ -53,6 +57,7 @@ export const Cmd: Command = {
         );
 
         if (subcommand === "add") {
+            const channel = Interaction.options.getChannel("channel", true);
             if (config.EventVCIDs.includes(channel.id)) {
                 await Interaction.editReply("⚠️ This voice channel is already in the event list.");
                 return;
@@ -63,6 +68,7 @@ export const Cmd: Command = {
 
             await Interaction.editReply(`✅ Added **${channel.name}** to the event voice channels.`);
         } else if (subcommand === "remove") {
+            const channel = Interaction.options.getChannel("channel", true);
             if (!config.EventVCIDs.includes(channel.id)) {
                 await Interaction.editReply("⚠️ This voice channel is not in the event list.");
                 return;
@@ -72,6 +78,25 @@ export const Cmd: Command = {
             await config.save();
 
             await Interaction.editReply(`✅ Removed **${channel.name}** from the event voice channels.`);
+        } else if ( subcommand === "show") {
+
+            if (!config.EventVCIDs || config.EventVCIDs.length === 0) {
+                await Interaction.editReply("📭 No event voice channels have been configured.");
+                return;
+            }
+
+            const guild = Interaction.guild;
+
+            const channelMentions = config.EventVCIDs
+                .map(id => {
+                    const ch = guild.channels.cache.get(id);
+                    return ch ? `🔊 <#${id}>` : `❓ Unknown Channel (${id})`;
+                })
+                .join("\n");
+
+            await Interaction.editReply({
+                content: `📋 **Configured Event Voice Channels:**\n${channelMentions}`
+            });
         }
     },
 };

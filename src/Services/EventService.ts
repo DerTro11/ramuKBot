@@ -33,7 +33,8 @@ export async function completeEvent(EventId: string, client : Client) : Promise<
     if(storedEvent.Status !== "Active" ) throw Error("Event to cancel has to be of status\"Active\"!");
 
     await EventSchema.updateOne({ _id: EventId }, {$set: {
-        Status: GnEventStatus.Completed
+        Status: GnEventStatus.Completed,
+        CompletedAt: new Date()
     }});
 
     

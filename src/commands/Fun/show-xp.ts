@@ -1,6 +1,7 @@
 import { MessageFlags, SlashCommandBuilder } from "discord.js";
 import { Command } from "types";
 import UserData from "./../../MongoDB/models/UserData";
+import { getRankFromXP, getTotalXPForRank, getRemainingXPToNextRank } from "../../Services/xpService";
 
 const CommandBody = new SlashCommandBuilder()
     .setName("show-xp")
@@ -39,9 +40,15 @@ export const Cmd : Command = {
         }
 
         const xpAmount = userDocument.ServerXP[guildId] || 0;
+        const rank = getRankFromXP(xpAmount);
+        const xpRemaining = getRemainingXPToNextRank(xpAmount);
 
         await Interaction.editReply({
-            content: `📊 **XP Lookup Successful!**\n👤 **User:** <@${userToFetch.id}>\n⭐ **XP:** ${xpAmount}`
+            content: `📊 **XP Lookup Successful!**
+        👤 **User:** <@${userToFetch.id}>
+        ⭐ **XP:** ${xpAmount}
+        🏅 **Rank:** ${rank}
+        📈 **Next Rank in:** ${xpRemaining} XP`
         });
     }
 

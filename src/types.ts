@@ -30,11 +30,13 @@ export interface GnEventData {
     InfAdditional: string,
     ScheduledAt: Date,
     ScheduledEndAt: Date,
+    CompletedAt: Date,
     ReactedUsers: {
         Users_Accept: string[],
         Users_Unsure: string[],
         Users_Decline: string[]
-    }
+    },
+    Attendees: { [UserID: string]: number }
     Status: GnEventStatus
 }
 

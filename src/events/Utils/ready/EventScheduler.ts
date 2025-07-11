@@ -1,4 +1,3 @@
-import AppConfig from "../../../AppConfig";
 import EventSchema from "../../../MongoDB/models/GameNight";
 import { Client } from "discord.js";
 import { startEvent, completeEvent, cancelEvent } from "../../../Services/EventService";
