@@ -51,7 +51,7 @@ export const Cmd: Command = {
         const inputRank = interaction.options.getInteger("rank");
         const targetPage = inputRank ? Math.floor((inputRank - 1) / RANKS_PER_PAGE) : 0;
 
-        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+        await interaction.deferReply();
 
         let currentPage = targetPage;
         const maxPages = 10; // adjust as needed

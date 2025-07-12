@@ -18,7 +18,7 @@ export const Cmd : Command = {
     CommandBody: CommandBody,
 
     async execute(Interaction) {
-        await Interaction.deferReply({ flags: MessageFlags.Ephemeral });
+        await Interaction.deferReply();
 
         const userToFetch = Interaction.options.getUser("user") || Interaction.user;
         const guildId = Interaction.guild?.id;
