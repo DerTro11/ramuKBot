@@ -65,7 +65,7 @@ export default async function(appCommandInteraction: ChatInputCommandInteraction
         await gameNight.save();
 
         // Announce in predefined text channel
-        const announcementChannel = buttonInteraction.guild.channels.cache.get(guildConfig?.ShoutChnlID) as TextChannel; // Replace with actual channel ID
+        const announcementChannel = guildConfig.ShoutChnlID && buttonInteraction.guild.channels.cache.get(guildConfig.ShoutChnlID) as TextChannel; // Replace with actual channel ID
         if (announcementChannel) {
             const acceptButton = new ButtonBuilder()
                 .setCustomId(`event_accept_${gameNight._id.toString()}`)

@@ -5,7 +5,8 @@ import GameNightEvent from "../../MongoDB/models/GameNight";
 export const Cmd: Command = {
     CommandBody: new SlashCommandBuilder()
         .setName("list-events")
-        .setDescription("Lists upcoming and active game night events."),
+        .setDescription("Lists upcoming and active game night events.")
+        .setContexts([0]),
 
     async execute(interaction) {
         await interaction.deferReply();
@@ -15,9 +16,9 @@ export const Cmd: Command = {
         // Fetch events sorted by date, limited to 10
         let events = await GameNightEvent.find({
             $or: [
-                { Status: "Active" }, // Include all Active events
-                { Status: "Scheduled", ScheduledAt: { $gte: now } }, // Only include Scheduled ones that haven't started
-                { Status: "Cancelled", ScheduledEndAt: { $gt: now } }
+                {  Status: "Active", GuildId: interaction.guild?.id }, // Include all Active events
+                { Status: "Scheduled", GuildId: interaction.guild?.id, ScheduledAt: { $gte: now } }, // Only include Scheduled ones that haven't started
+                { Status: "Cancelled", GuildId: interaction.guild?.id, ScheduledEndAt: { $gt: now } }
             ]
         }).sort({ ScheduledAt: 1 }).limit(10) ;
         

@@ -1,6 +1,8 @@
 import { GuildScheduledEventStatus, ButtonInteraction, TextChannel, EmbedBuilder, Client } from "discord.js";
 import EventSchema from "../MongoDB/models/GameNight"; // Import your event schema
 import { GnEventData, GnEventStatus } from "../types";
+import { addXPToUser } from "./xpService";
+import GuildConfig from "../MongoDB/models/GuildConfig";
 
 export async function cancelEvent(EventId: string, client : Client) : Promise<void> {
     const EventData = await EventSchema.findById(EventId) as GnEventData;
@@ -33,7 +35,8 @@ export async function completeEvent(EventId: string, client : Client) : Promise<
     if(storedEvent.Status !== "Active" ) throw Error("Event to cancel has to be of status\"Active\"!");
 
     await EventSchema.updateOne({ _id: EventId }, {$set: {
-        Status: GnEventStatus.Completed
+        Status: GnEventStatus.Completed,
+        CompletedAt: new Date()
     }});
 
     
@@ -41,7 +44,90 @@ export async function completeEvent(EventId: string, client : Client) : Promise<
     
     const discordEvent = guild?.scheduledEvents.cache.get(storedEvent.ServerEventID);
     if (discordEvent) await discordEvent.setStatus(GuildScheduledEventStatus.Completed);
+
+    // Distribuit XP
+    const guildConfig = await GuildConfig.findOne({ GuildID: storedEvent.GuildId });
+    const xpPerMin = guildConfig?.EventXPPerMinute || 10;
+
+    const durationMin = ((storedEvent.CompletedAt?.getTime() || storedEvent.ScheduledEndAt.getTime()) - storedEvent.ScheduledAt.getTime()) / 60000;
+    const minRequired = durationMin * 0.25;
+    const bonusThreshold = durationMin * 0.5;
+
+
+    for (const userId in storedEvent.Attendees) {
+        const minutes = storedEvent.Attendees[userId];
     
+        const isBonusEligible = 
+            storedEvent.ReactedUsers?.Users_Accept.includes(userId) &&
+            minutes >= bonusThreshold;
+
+        const xpRaw = minutes * xpPerMin;
+        const xp = isBonusEligible ? Math.floor(xpRaw * 1.5) : xpRaw;
+
+        await addXPToUser(userId, storedEvent.GuildId, xp);
+
+        const user = await client.users.cache.get(userId);
+        user?.send(
+            `Hey 👋\nYou've just earned **${xp} XP** inside **${guild.name}** for attending a recent event.` +
+            (isBonusEligible ? `\n🎉 Thanks for showing up — you earned a **1.5x bonus** for being there at least half the time!` : "")
+        );
+    }
+
+    // Penalty logic: check users who accepted but are missing or attended < 25%
+   
+
+    const missedUsers = storedEvent?.ReactedUsers?.Users_Accept.filter(uid => {
+        const mins = storedEvent.Attendees[uid] || 0;
+        return mins < minRequired;
+    });
+
+    if(!missedUsers) return;
+
+    // Example penalty: Log, DM, remove XP, etc
+    for (const userId of missedUsers) {
+        //console.log(`Penalty candidate: ${userId} (attended <25%)`);
+        // Optional: remove XP, DM, or log in moderation log
+        const user = await client.users.cache.get(userId);
+        await addXPToUser(userId, guild.id, -30)
+        user?.send("Hey 👋\nWe are sorry to tell you that you've recieved a 30 XP penalty for not attending a recent event, which you've marked yourself as accepted for.\nWhen clicking accept please make sure you attend at least 25% of the event.");
+    }
+
+    // announcing event completion 
+    if (storedEvent.ShoutMsgId && guildConfig?.ShoutChnlID) {
+        const announcementChannel = guild.channels.cache.get(guildConfig.ShoutChnlID) as TextChannel;
+
+        try {
+            const shoutMsg = await announcementChannel.messages.fetch(storedEvent.ShoutMsgId);
+
+            const hostMention = `<@${storedEvent.HostDCId}>`;
+            const durationMin = ((storedEvent.CompletedAt?.getTime() || storedEvent.ScheduledEndAt.getTime()) - storedEvent.ScheduledAt.getTime()) / 60000;
+            const bonusThreshold = durationMin * 0.5;
+
+            const attendeeEntries = (Object.entries(storedEvent.Attendees || {}) as [string, number][])
+                .map(([userId, mins]) => {
+                    const isBonus = storedEvent.ReactedUsers?.Users_Accept.includes(userId) && mins >= bonusThreshold;
+                    return `• <@${userId}> — \`${mins} min\`${isBonus ? " 🟢 Bonus" : ""}`;
+                })
+                .join("\n") || "_No attendees tracked_";
+
+
+            const summaryEmbed = new EmbedBuilder()
+                .setColor("Green")
+                .setTitle("✅ Event Completed")
+                .setDescription(
+                    `**Host:** ${hostMention}\n**Duration:** \`${Math.round(durationMin)} min\`\n\n` +
+                    `__🎮 Attendees:__\n${attendeeEntries}\n\n`
+                )
+                .setTimestamp();
+
+            await shoutMsg.reply({ embeds: [summaryEmbed] });
+
+        } catch (err) {
+            console.error("❌ Failed to fetch or reply to shout message:", err);
+        }
+    }
+
+
 }
 
 

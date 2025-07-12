@@ -2,6 +2,7 @@ import {AppInteraction, GnEventData, GnEventStatus} from "../../types";
 import { ButtonInteraction, Interaction, GuildMember, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, ModalSubmitInteraction, GuildScheduledEventStatus } from "discord.js";
 import {startEvent, cancelEvent, completeEvent} from "../../Services/EventService";
 import EventSchema from "../../MongoDB/models/GameNight"; 
+import UserData from "../../MongoDB/models/UserData";
 
 const HostCmds = ["cancel", "edit", "mute", "end", "start"] // Buttons which can only be pressed by a host
 
@@ -207,11 +208,18 @@ async function GNhandleRSVP(interaction: ButtonInteraction, action: string, even
         }
 
         const userId = interaction.user.id;
+        let XPRecieved : boolean = false;
+
+        function filterForUser(id : string) : boolean {
+            XPRecieved = id === userId ? true : XPRecieved;
+            return id !== userId;
+        }
+
         if(!event || !event.ReactedUsers) return;
         // Remove user from all RSVP lists to ensure they only belong to one
-        event.ReactedUsers.Users_Accept = event.ReactedUsers.Users_Accept.filter(id => id !== userId);
-        event.ReactedUsers.Users_Unsure = event.ReactedUsers.Users_Unsure.filter(id => id !== userId);
-        event.ReactedUsers.Users_Decline = event.ReactedUsers.Users_Decline.filter(id => id !== userId);
+        event.ReactedUsers.Users_Accept = event.ReactedUsers.Users_Accept.filter(filterForUser);
+        event.ReactedUsers.Users_Unsure = event.ReactedUsers.Users_Unsure.filter(filterForUser);
+        event.ReactedUsers.Users_Decline = event.ReactedUsers.Users_Decline.filter(filterForUser);
 
         // Add user to the appropriate list
         if (action === "accept") {
@@ -224,8 +232,16 @@ async function GNhandleRSVP(interaction: ButtonInteraction, action: string, even
 
         await event.save();
 
+        if(!XPRecieved){
+            await UserData.updateOne(
+                {UserId: userId},
+                { $inc: { [`ServerXP.${event.GuildId}`]: 10 } },
+                { upsert: true }
+            );
+        }
+
         await interaction.reply({
-            content: `✅ You have marked yourself as **${action.toUpperCase()}** for this event!`,
+            content: `✅ You have marked yourself as **${action.toUpperCase()}** for this event!${!XPRecieved ? `\n⭐ You've gained **10 XP** for reacting!` : ""}`,
             ephemeral: true
         });
 
