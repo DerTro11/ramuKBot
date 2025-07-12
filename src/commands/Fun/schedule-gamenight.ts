@@ -25,6 +25,7 @@ const CommandBody = new SlashCommandBuilder()
     .addChannelOption(option =>
         option.setName("channel")
             .setDescription("The channel where the event will be hosted.")
+            .addChannelTypes(ChannelType.GuildVoice)
             .setRequired(true)
     )
     .addStringOption(option =>
