@@ -10,7 +10,6 @@ const GameNightSchema = new mongoose.Schema({
     InfAdditional: { type: String, default: "" },
     ScheduledAt: { type: Date, required: true },
     ScheduledEndAt: { type: Date, require: true, default: new Date() },
-    CompletedAt: {type: Date},
     ReactedUsers: {
         Users_Accept: { type: [String], default: [] },
         Users_Unsure: { type: [String], default: [] },
