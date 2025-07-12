@@ -36,7 +36,7 @@ function buildRankEmbed(page: number, ranksPerPage: number = RANKS_PER_PAGE) {
 }
 
 const CommandBody = new SlashCommandBuilder()
-    .setName("ranks")
+    .setName("show-ranks")
     .setDescription("Displays the ranks and XP required")
     .addIntegerOption(opt =>
         opt

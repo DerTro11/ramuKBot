@@ -4,7 +4,7 @@ import UserData from "./../../MongoDB/models/UserData";
 import { getRankFromXP, getTotalXPForRank, getRemainingXPToNextRank } from "../../Services/xpService";
 
 const CommandBody = new SlashCommandBuilder()
-    .setName("show-xp")
+    .setName("rank")
     .setDescription("Shows the users XP.")
     .setContexts([0])
     .addUserOption(option => 
