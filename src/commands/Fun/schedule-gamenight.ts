@@ -75,13 +75,15 @@ export const Cmd: Command = {
         }
 
         // Validate the channel
-        if(eventVCChnl?.type !== ChannelType.GuildVoice){
-            await Interaction.reply({ content: "Invalid channel type! Please make sure the channel is a voice channel.", ephemeral: true });
-            return;
-        }
+        if (!guildConfig.EventVCIDs.find((v) => v === eventVCChnl?.id)) {
+            const allowedChannels = guildConfig.EventVCIDs
+                .map((id) => `<#${id}>`)
+                .join(', ');
 
-        if(!guildConfig.EventVCIDs.find((v) => v === eventVCChnl?.id)){
-            await Interaction.reply({ content: "You cannot host an evnet in this channel.", ephemeral: true });
+            await Interaction.reply({ 
+                content: `You cannot host an event in this channel.\nAllowed channels: ${allowedChannels}`, 
+                ephemeral: true 
+            });
             return;
         }
 
