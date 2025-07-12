@@ -6,7 +6,8 @@ import UserData from "../MongoDB/models/UserData";
  * Rank 1 requires 0 XP, Rank 2 requires 2, Rank 3 requires 6, etc.
  */
 export function getTotalXPForRank(rank: number): number {
-    return Math.pow(2, rank) - 2;
+    //return Math.pow(2, rank) - 2;
+    return Math.round( Math.pow(rank, 3) / 10 ) * 10 + 10*rank;
 }
 
 /**
@@ -24,7 +25,7 @@ export function getRankFromXP(xp: number): number {
  * XP needed between current rank and the next one.
  */
 export function getXPForNextRank(rank: number): number {
-    return Math.pow(2, rank);
+    return Math.round( Math.pow(rank, 3) / 10 ) * 10 + 10 * rank + 2;
 }
 
 /**

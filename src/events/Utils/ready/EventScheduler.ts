@@ -24,6 +24,25 @@ export default async function checkEvents(client : Client) {
             if(now < event.ScheduledEndAt && event.Status === "Scheduled") await startEvent(event._id.toString(), client);
             else if(now > event.ScheduledEndAt && event.Status === "Active" ) await completeEvent(event._id.toString(), client);
             else if(now > event.ScheduledEndAt && event.Status === "Scheduled") await cancelEvent(event._id.toString(), client);
+
+            else if(now < event.ScheduledEndAt && event.Status === "Active" ) {
+                const vc = client.guilds.cache.get(event.GuildId)?.channels.cache.get(event.VCChnlId);
+                if (vc?.isVoiceBased()) {
+                    const attendees = event.Attendees || new Map();
+
+                    for (const [userId, member] of vc.members) {
+                        if (member.user.bot) continue;
+
+                        
+                        const prev = event.Attendees[userId] || 0;
+                        event.Attendees[userId] = prev + 1;
+                    }
+
+                    event.markModified("Attendees");
+                    await event.save();
+                }
+            }
+
         }
     }, 60_000)
     
