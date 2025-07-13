@@ -18,7 +18,7 @@ const Handler : EventHandler<"messageCreate"> = {
         const now = Date.now();
 
         const lastXP = chatXPCooldowns.get(key);
-        if (lastXP && now - lastXP < cooldown) return; // ⏳ still on cooldown
+        if (lastXP && now - lastXP < (guildConfig.ChatXPCooldownMs || cooldown)) return; // ⏳ still on cooldown
 
         chatXPCooldowns.set(key, now); // ✅ store timestamp
 
