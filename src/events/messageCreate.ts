@@ -22,10 +22,15 @@ const Handler : EventHandler<"messageCreate"> = {
 
         chatXPCooldowns.set(key, now); // ✅ store timestamp
 
-        const xpAddResult = await addXPToUser(message.author.id, message.guild.id, 1);
+        const xpAddResult = await addXPToUser(message.author.id, message.guild.id, guildConfig.ChatXPAmount || 1);
         
         if (xpAddResult.rankedUp) {
-            await message.reply(`🎉 <@${message.author.id}> ranked up to **Rank ${xpAddResult.newRank}**!`);
+            try {
+                await message.reply(`🎉 <@${message.author.id}> ranked up to **Rank ${xpAddResult.newRank}**!`);
+            } catch (error) {
+                console.log(`Failed to send rank up reply: ${error}`);
+            }
+
         }
 
     },

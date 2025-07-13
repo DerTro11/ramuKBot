@@ -64,14 +64,14 @@ export async function completeEvent(EventId: string, client : Client) : Promise<
             minutes >= bonusThreshold;
 
         const xpRaw = minutes * xpPerMin;
-        const xp = isBonusEligible ? Math.floor(xpRaw * 1.5) : xpRaw;
+        const xp = isBonusEligible ? Math.floor(xpRaw * (guildConfig?.EventBonusMultiplier || 1.5)) : xpRaw;
 
         await addXPToUser(userId, storedEvent.GuildId, xp);
 
         const user = await client.users.cache.get(userId);
         user?.send(
             `Hey 👋\nYou've just earned **${xp} XP** inside **${guild.name}** for attending a recent event.` +
-            (isBonusEligible ? `\n🎉 Thanks for showing up — you earned a **1.5x bonus** for being there at least half the time!` : "")
+            (isBonusEligible ? `\n🎉 Thanks for showing up — you earned a **${guildConfig?.EventBonusMultiplier || 1.5}x bonus** for being there at least half the time!` : "")
         );
     }
 
@@ -90,8 +90,8 @@ export async function completeEvent(EventId: string, client : Client) : Promise<
         //console.log(`Penalty candidate: ${userId} (attended <25%)`);
         // Optional: remove XP, DM, or log in moderation log
         const user = await client.users.cache.get(userId);
-        await addXPToUser(userId, guild.id, -30)
-        user?.send("Hey 👋\nWe are sorry to tell you that you've recieved a 30 XP penalty for not attending a recent event, which you've marked yourself as accepted for.\nWhen clicking accept please make sure you attend at least 25% of the event.");
+        await addXPToUser(userId, guild.id,  (guildConfig?.PenaltyXPAmount && -guildConfig.PenaltyXPAmount) || -30)
+        user?.send(`Hey 👋\nWe are sorry to tell you that you've recieved a ${guildConfig?.PenaltyXPAmount || "30"} XP penalty for not attending a recent event, which you've marked yourself as accepted for.\nWhen clicking accept please make sure you attend at least 25% of the event.`);
     }
 
     // announcing event completion 
