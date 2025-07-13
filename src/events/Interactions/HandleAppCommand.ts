@@ -1,6 +1,6 @@
 import { readdirSync } from "fs";
 import {AppInteraction, Command} from "../../types";
-import { Interaction, ChatInputCommandInteraction } from "discord.js";
+import { Interaction, ChatInputCommandInteraction, MessageFlags } from "discord.js";
 import path from "path";
 
 
@@ -34,16 +34,16 @@ async function execute(interaction: Interaction) {
             if (interaction.replied || interaction.deferred) {
                 interaction.followUp({
                     content: "⚠️ An unexpected error occurred while executing this command.",
-                    ephemeral: true
+                    flags: MessageFlags.Ephemeral
                 }).catch(console.error);
             } else {
                 interaction.reply({
                     content: "⚠️ An unexpected error occurred while executing this command.",
-                    ephemeral: true
+                    flags: MessageFlags.Ephemeral
                 }).catch(console.error);
             }
         }
-    }
+    } 
     else{
         interaction.reply(`Error: Command "${interaction.commandName}" not found!\nPlease report this message to a developer!`)
     }

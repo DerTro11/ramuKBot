@@ -82,7 +82,7 @@ export const Cmd: Command = {
 
         collector.on("collect", async i => {
             if (i.user.id !== interaction.user.id) {
-                await i.reply({ content: "⛔ You can't use these buttons.", ephemeral: true });
+                await i.reply({ content: "⛔ You can't use these buttons.", flags: MessageFlags.Ephemeral });
                 return;
             }
 

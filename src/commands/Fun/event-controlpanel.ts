@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
+import { SlashCommandBuilder, ChatInputCommandInteraction, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from "discord.js";
 import { Command } from "types";
 import EventSchema from "../../MongoDB/models/GameNight"; // Import your MongoDB schema
 
@@ -19,17 +19,17 @@ export const Cmd: Command = {
         const EventData = await EventSchema.findById(EventId);
 
         if (!EventData) {
-            Interaction.reply({ content: "⚠️ Event not found.", ephemeral: true });
+            Interaction.reply({ content: "⚠️ Event not found.", flags: MessageFlags.Ephemeral });
             return;
         }
         if(EventData.Status === "Cancelled" || EventData.Status === "Completed"){
-            Interaction.reply({content: "⚠️ Event was cancelled or completed", ephemeral: true})
+            Interaction.reply({content: "⚠️ Event was cancelled or completed", flags: MessageFlags.Ephemeral})
             return;
         }
 
         // Ensure the user is the host of the event
         if (EventData.HostDCId !== Interaction.user.id) {
-            Interaction.reply({ content: "🚫 You are not the host of this event.", ephemeral: true });
+            Interaction.reply({ content: "🚫 You are not the host of this event.", flags: MessageFlags.Ephemeral });
             return;
         }
 
@@ -71,7 +71,7 @@ export const Cmd: Command = {
         await Interaction.reply({
             content: `🎮 **Event Control Panel**\nUse the buttons below to manage the event.`,
             components: [Buttons, Buttons2],
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
         });
     }
 };

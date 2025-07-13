@@ -1,4 +1,4 @@
-import { PermissionFlagsBits, SlashCommandBuilder, ChatInputCommandInteraction } from "discord.js";
+import { PermissionFlagsBits, SlashCommandBuilder, MessageFlags } from "discord.js";
 import { Command } from "types";
 import {convertLatinToCyrillic} from "../../Utils/miscUtil";
 
@@ -16,7 +16,7 @@ const CommandBody = new SlashCommandBuilder()
 export const Cmd : Command = {
     CommandBody: CommandBody,
     async execute(Interaction) {
-        await Interaction.deferReply({ephemeral: true});
+        await Interaction.deferReply({flags: MessageFlags.Ephemeral});
 
         try{
             const TargetUser = Interaction.options.getUser("target", true);
