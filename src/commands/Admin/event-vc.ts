@@ -39,7 +39,7 @@ const CommandBody = new SlashCommandBuilder()
 export const Cmd: Command = {
     CommandBody: CommandBody,
     async execute(Interaction) {
-        await Interaction.deferReply({ flags: MessageFlags.Ephemeral });
+        await Interaction.deferReply();
 
         const subcommand = Interaction.options.getSubcommand();
         const guildId = Interaction.guild?.id;
