@@ -1,1 +1,4 @@
-export default { "UpdateSlashCMDsOnRun": false }
+export default { 
+    "UpdateSlashCMDsOnRun": false,
+    "MainGuild": "0"
+}
