@@ -34,10 +34,12 @@ export async function completeEvent(EventId: string, client : Client) : Promise<
     if(!storedEvent) throw Error(`Could not find event of id ${EventId}`);
     if(storedEvent.Status !== "Active" ) throw Error("Event to cancel has to be of status\"Active\"!");
 
-    await EventSchema.updateOne({ _id: EventId }, {$set: {
-        Status: GnEventStatus.Completed,
-        CompletedAt: new Date()
-    }});
+    const actualCompletion = new Date();
+    await EventSchema.updateOne({ _id: EventId }, {
+        $set: {
+            Status: GnEventStatus.Completed,
+        }
+    });
 
     
     const guild = await client.guilds.fetch(storedEvent.GuildId);
@@ -49,7 +51,7 @@ export async function completeEvent(EventId: string, client : Client) : Promise<
     const guildConfig = await GuildConfig.findOne({ GuildID: storedEvent.GuildId });
     const xpPerMin = guildConfig?.EventXPPerMinute || 10;
 
-    const durationMin = ((storedEvent.CompletedAt?.getTime() || storedEvent.ScheduledEndAt.getTime()) - storedEvent.ScheduledAt.getTime()) / 60000;
+    const durationMin = (actualCompletion.getTime()  - storedEvent.ScheduledAt.getTime()) / 60000;
     const minRequired = durationMin * 0.25;
     const bonusThreshold = durationMin * 0.5;
 
@@ -100,7 +102,7 @@ export async function completeEvent(EventId: string, client : Client) : Promise<
             const shoutMsg = await announcementChannel.messages.fetch(storedEvent.ShoutMsgId);
 
             const hostMention = `<@${storedEvent.HostDCId}>`;
-            const durationMin = ((storedEvent.CompletedAt?.getTime() || storedEvent.ScheduledEndAt.getTime()) - storedEvent.ScheduledAt.getTime()) / 60000;
+            const durationMin = ( actualCompletion.getTime() - storedEvent.ScheduledAt.getTime()) / 60000;
             const bonusThreshold = durationMin * 0.5;
 
             const attendeeEntries = (Object.entries(storedEvent.Attendees || {}) as [string, number][])
