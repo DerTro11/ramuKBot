@@ -2,6 +2,7 @@ import { ChatInputCommandInteraction, SlashCommandBuilder, ButtonBuilder, Button
 import { Command } from "types";
 import handleGameNightConfirmation from "../../Utils/ConfirmGN"
 import GuildConfigs from "../../MongoDB/models/GuildConfig";
+import GameNight from "../../MongoDB/models/GameNight";
 
 const CommandBody = new SlashCommandBuilder()
     .setName("schedule-gamenight")
@@ -42,7 +43,7 @@ export const Cmd: Command = {
         const dateString = Interaction.options.getString("date", true);
         const endDateString = Interaction.options.getString("end-time", true);
         const additionalInfo = Interaction.options.getString("info") || "No additional info provided.";
-        const eventVCChnl = Interaction.options.getChannel("channel");
+        const eventVCChnl = Interaction.options.getChannel("channel", true);
         const guildConfig = await GuildConfigs.findOne({ GuildID: Interaction.guild?.id});
 
         if(!guildConfig){
@@ -75,7 +76,7 @@ export const Cmd: Command = {
         }
 
         // Validate the channel
-        if (!guildConfig.EventVCIDs.find((v) => v === eventVCChnl?.id)) {
+        if (!guildConfig.EventVCIDs.find((v) => v === eventVCChnl.id)) {
             const allowedChannels = guildConfig.EventVCIDs
                 .map((id) => `<#${id}>`)
                 .join(', ');
@@ -86,6 +87,30 @@ export const Cmd: Command = {
             });
             return;
         }
+
+        // Check if the channel is already taken within the selected timeframe
+        const conflictingEvent = await GameNight.findOne({
+            GuildId: Interaction.guild?.id,
+            VCChnlId: eventVCChnl?.id,
+            Status: { $in: ["Scheduled", "Active"] },
+            $or: [
+                // Existing event starts within the new event's timeframe
+                { ScheduledAt: { $gte: eventDate, $lt: endDate } },
+                // Existing event ends within the new event's timeframe
+                { ScheduledEndAt: { $gt: eventDate, $lte: endDate } },
+                // Existing event completely overlaps the new event
+                { ScheduledAt: { $lte: eventDate }, ScheduledEndAt: { $gte: endDate } }
+            ]
+        });
+
+        if (conflictingEvent) {
+            await Interaction.reply({
+                content: `❌ The selected voice channel <#${eventVCChnl?.id}> is already booked during this timeframe.\nEvent: **${conflictingEvent.InfGame}** from **${conflictingEvent.ScheduledAt.toUTCString()}** to **${conflictingEvent.ScheduledEndAt.toUTCString()}**.`,
+                ephemeral: true
+            });
+            return;
+        }
+        
 
         // Create timestamp for Discord
         const discordTimestamp = `<t:${Math.floor(eventDate.getTime() / 1000)}:F>`;
