@@ -88,6 +88,12 @@ async function pressEndEvent(interaction: ButtonInteraction, EventData: GnEventD
 }
 
 async function editEvent(interaction: ButtonInteraction, EventData: GnEventData) {
+
+    if( !(EventData.Status === GnEventStatus.Scheduled || EventData.Status === GnEventStatus.Active)){
+        await interaction.reply({ content: "❌ Can only edit event information, if it is of status scheduled or active.", flags: MessageFlags.Ephemeral });
+        return;
+    }
+
     const modal = new ModalBuilder()
         .setCustomId(`changeGameModal_${EventData._id.toString()}`)
         .setTitle("Change Game Information");
@@ -169,6 +175,10 @@ async function handleModalSubmission(interaction: ModalSubmitInteraction) {
 async function muteVC(interaction: ButtonInteraction, EventData: GnEventData, SetMute : boolean = true) {
     const guild = interaction.guild;
     if (!guild) return interaction.reply({ content: "⚠️ Guild not found.", flags: MessageFlags.Ephemeral });
+    if( !(EventData.Status === GnEventStatus.Active)){
+        await interaction.reply({ content: "❌ Can only mute if event is Active.", flags: MessageFlags.Ephemeral });
+        return;
+    }
     const EventVoiceChannel = guild?.scheduledEvents.cache.get(EventData.ServerEventID)?.channel?.id;
 
 

@@ -47,10 +47,10 @@ export const Cmd : Command = {
             .setTitle("📊 XP Lookup Successful!")
             .setColor("Blue")
             .addFields(
-                { name: "👤 User", value: `<@${userToFetch.id}>`, inline: true },
-                { name: "⭐ XP", value: `${xpAmount}`, inline: true },
-                { name: "🏅 Rank", value: `${rank}`, inline: true },
-                { name: "📈 Next Rank in", value: `${xpRemaining} XP`, inline: true }
+                { name: "👤 User", value: `<@${userToFetch.id}>`, inline: false },
+                { name: "⭐ XP", value: `${xpAmount}`, inline: false },
+                { name: "🏅 Rank", value: `${rank}`, inline: false },
+                { name: "📈 Next Rank in", value: `${xpRemaining} XP`, inline: false }
             )
             .setFooter({ text: `XP data for ${Interaction.guild?.name}` })
             .setTimestamp();
