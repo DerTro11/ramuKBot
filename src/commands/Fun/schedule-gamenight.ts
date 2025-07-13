@@ -1,8 +1,9 @@
-import { ChatInputCommandInteraction, SlashCommandBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, ComponentType, ButtonInteraction, ChannelType } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, ComponentType, ButtonInteraction, ChannelType, MessageFlags } from "discord.js";
 import { Command } from "types";
 import handleGameNightConfirmation from "../../Utils/ConfirmGN"
 import GuildConfigs from "../../MongoDB/models/GuildConfig";
 import GameNight from "../../MongoDB/models/GameNight";
+import { isChannelAvailableForEvent } from "../../Services/EventService";
 
 const CommandBody = new SlashCommandBuilder()
     .setName("schedule-gamenight")
@@ -47,7 +48,7 @@ export const Cmd: Command = {
         const guildConfig = await GuildConfigs.findOne({ GuildID: Interaction.guild?.id});
 
         if(!guildConfig){
-            await Interaction.reply({content: "Error: Could not find Guild config!", ephemeral: true})
+            await Interaction.reply({content: "Error: Could not find Guild config!", flags: MessageFlags.Ephemeral})
             return;
         }
 
@@ -55,23 +56,23 @@ export const Cmd: Command = {
         const now = new Date()
         const eventDate = new Date(dateString);
         if (isNaN(eventDate.getTime())) {
-            await Interaction.reply({ content: "Invalid date format! Please use YYYY-MM-DD HH:MM UTC.", ephemeral: true });
+            await Interaction.reply({ content: "Invalid date format! Please use YYYY-MM-DD HH:MM UTC.", flags: MessageFlags.Ephemeral });
             return;
         }
 
         const endDate = new Date(endDateString);
         if (isNaN(endDate.getTime())) {
-            await Interaction.reply({ content: "Invalid date format! Please use YYYY-MM-DD HH:MM UTC.", ephemeral: true });
+            await Interaction.reply({ content: "Invalid date format! Please use YYYY-MM-DD HH:MM UTC.", flags: MessageFlags.Ephemeral });
             return;
         }
         
         if(now >= eventDate || now >= endDate){
-            await Interaction.reply({ content: "Invalid date! Event cannot be created in the past.", ephemeral: true });
+            await Interaction.reply({ content: "Invalid date! Event cannot be created in the past.", flags: MessageFlags.Ephemeral });
             return;
         }
 
         if(endDate <= eventDate){
-            await Interaction.reply({ content: "Invalid date! Event end cannot be earlier than the scheduled date.", ephemeral: true });
+            await Interaction.reply({ content: "Invalid date! Event end cannot be earlier than the scheduled date.", flags: MessageFlags.Ephemeral });
             return;
         }
 
@@ -83,33 +84,29 @@ export const Cmd: Command = {
 
             await Interaction.reply({ 
                 content: `You cannot host an event in this channel.\nAllowed channels: ${allowedChannels}`, 
-                ephemeral: true 
+                flags: MessageFlags.Ephemeral
             });
             return;
         }
 
         // Check if the channel is already taken within the selected timeframe
-        const conflictingEvent = await GameNight.findOne({
-            GuildId: Interaction.guild?.id,
-            VCChnlId: eventVCChnl?.id,
-            Status: { $in: ["Scheduled", "Active"] },
-            $or: [
-                // Existing event starts within the new event's timeframe
-                { ScheduledAt: { $gte: eventDate, $lt: endDate } },
-                // Existing event ends within the new event's timeframe
-                { ScheduledEndAt: { $gt: eventDate, $lte: endDate } },
-                // Existing event completely overlaps the new event
-                { ScheduledAt: { $lte: eventDate }, ScheduledEndAt: { $gte: endDate } }
-            ]
-        });
+        if(!Interaction.guild) return;
+        const { available, conflictingEvent } = await isChannelAvailableForEvent(
+            Interaction.guild.id,
+            eventVCChnl.id,
+            eventDate,
+            endDate
+        );
 
-        if (conflictingEvent) {
+        if (!available) {
             await Interaction.reply({
-                content: `❌ The selected voice channel <#${eventVCChnl?.id}> is already booked during this timeframe.\nEvent: **${conflictingEvent.InfGame}** from **${conflictingEvent.ScheduledAt.toUTCString()}** to **${conflictingEvent.ScheduledEndAt.toUTCString()}**.`,
-                ephemeral: true
+                content: `❌ The selected voice channel <#${eventVCChnl.id}> is already booked during this timeframe.\n` +
+                        `Event: **${conflictingEvent.InfGame}** from **${conflictingEvent.ScheduledAt.toUTCString()}** to **${conflictingEvent.ScheduledEndAt.toUTCString()}**.`,
+                flags: MessageFlags.Ephemeral
             });
             return;
         }
+
         
 
         // Create timestamp for Discord
@@ -133,7 +130,7 @@ export const Cmd: Command = {
         const reply = await Interaction.reply({
             content: `🎮 **Game Night Proposal** 🎮\n\n📅 **Date:** ${discordTimestamp}\n🎮 **Game:** ${game}\nℹ️ **Info:** ${additionalInfo}\n⏱️ **End at:** ${discordendTimestamp}\n\nDo you confirm this event?`,
             components: [actionRow],
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
         });
 
         const ConfirmCancleCollector = reply.createMessageComponentCollector({componentType: ComponentType.Button});

@@ -1,6 +1,6 @@
 import {AppInteraction, GnEventData, GnEventStatus} from "../../types";
-import { ButtonInteraction, Interaction, GuildMember, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, ModalSubmitInteraction, GuildScheduledEventStatus } from "discord.js";
-import {startEvent, cancelEvent, completeEvent} from "../../Services/EventService";
+import { ButtonInteraction, Interaction, GuildMember, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, ModalSubmitInteraction, GuildScheduledEventStatus, MessageFlags } from "discord.js";
+import {startEvent, cancelEvent, completeEvent, updateEventInformation} from "../../Services/EventService";
 import EventSchema from "../../MongoDB/models/GameNight"; 
 import UserData from "../../MongoDB/models/UserData";
 
@@ -14,12 +14,12 @@ async function execute(interaction : Interaction){
         const EventData : GnEventData | null = await EventSchema.findById(EventId);
         
         if (!EventData) {
-            interaction.reply({ content: "⚠️ Event not found.", ephemeral: true });
+            interaction.reply({ content: "⚠️ Event not found.", flags: MessageFlags.Ephemeral });
             return;
         }
         
         if (EventData.HostDCId !== interaction.user.id && HostCmds.find( (element) => element === Action )) {
-            interaction.reply({ content: "🚫 You are not the host of this event.", ephemeral: true });
+            interaction.reply({ content: "🚫 You are not the host of this event.", flags: MessageFlags.Ephemeral });
             return;
         }
 
@@ -35,7 +35,7 @@ async function execute(interaction : Interaction){
         else if (interaction.customId.startsWith("event_decline"))      GNhandleRSVP(interaction, Action, EventId);
 
     }catch(err){
-        interaction.reply({ content: "An error occured!", ephemeral: true });
+        interaction.reply({ content: "An error occured!", flags: MessageFlags.Ephemeral });
         return;
     }
     
@@ -44,7 +44,7 @@ async function execute(interaction : Interaction){
 
 async function listReactedUsers(interaction : ButtonInteraction, EventData : GnEventData) {
     const textReply = `${EventData.ReactedUsers.Users_Accept.length} want to attend this event: ${ListUsersFromArray(EventData.ReactedUsers.Users_Accept)}\n${EventData.ReactedUsers.Users_Unsure.length} might attend this event: ${ListUsersFromArray(EventData.ReactedUsers.Users_Unsure)}\n${EventData.ReactedUsers.Users_Decline.length} won't attend this event: ${ListUsersFromArray(EventData.ReactedUsers.Users_Decline)}`
-    interaction.reply({content: textReply, ephemeral: true})
+    interaction.reply({content: textReply, flags: MessageFlags.Ephemeral})
 }
 
 function ListUsersFromArray(UserArray : string[]){
@@ -62,9 +62,9 @@ function ListUsersFromArray(UserArray : string[]){
 async function pressStartEvent(interaction: ButtonInteraction, EventData: GnEventData) {
     try {
         await startEvent(EventData._id.toString(), interaction.client)
-        await interaction.reply({ content: "✅ Event started successfully.", ephemeral: true });
+        await interaction.reply({ content: "✅ Event started successfully.", flags: MessageFlags.Ephemeral });
     } catch (err) {
-        await interaction.reply({ content: "❌ Failed to start event.", ephemeral: true });
+        await interaction.reply({ content: "❌ Failed to start event.", flags: MessageFlags.Ephemeral });
         console.error(`Failed to start event: ${err}`)
     }
 }
@@ -72,18 +72,18 @@ async function pressStartEvent(interaction: ButtonInteraction, EventData: GnEven
 async function pressCancelEvent(interaction: ButtonInteraction, EventData: GnEventData) {
     try{
         await cancelEvent(EventData._id.toString(), interaction.client)
-        await interaction.reply({ content: "✅ Event cancelled successfully.", ephemeral: true });
+        await interaction.reply({ content: "✅ Event cancelled successfully.", flags: MessageFlags.Ephemeral });
     }catch(err){
-        await interaction.reply({ content: "❌ Event cancellation failed.", ephemeral: true });
+        await interaction.reply({ content: "❌ Event cancellation failed.", flags: MessageFlags.Ephemeral });
     }
 }
 
 async function pressEndEvent(interaction: ButtonInteraction, EventData: GnEventData) {
     try{
         await completeEvent(EventData._id.toString(), interaction.client);
-        await interaction.reply({ content: "✅ Event ended.", ephemeral: true });
+        await interaction.reply({ content: "✅ Event ended.", flags: MessageFlags.Ephemeral });
     }catch(err){
-        await interaction.reply({ content: "❌ Failed to end event.", ephemeral: true });
+        await interaction.reply({ content: "❌ Failed to end event.", flags: MessageFlags.Ephemeral });
     }
 }
 
@@ -129,59 +129,52 @@ async function handleModalSubmission(interaction: ModalSubmitInteraction) {
     if (!interaction.customId.startsWith("changeGameModal_")) return;
 
     const EventData = await EventSchema.findById(interaction.customId.split("_")[1]);
-    if(!EventData) return;
-    const ServerEvent = interaction.guild?.scheduledEvents.cache.get( EventData?.ServerEventID );
+    if (!EventData) return;
 
     const newGameInput = interaction.fields.getTextInputValue("newGameName");
-    const newDescInput =  interaction.fields.getTextInputValue("newEventDesc");
+    const newDescInput = interaction.fields.getTextInputValue("newEventDesc");
     const newDateInput = interaction.fields.getTextInputValue("newDate");
     const newEndDateInput = interaction.fields.getTextInputValue("newEndDate");
 
-    const newGame = newGameInput !== "" && newGameInput || undefined;
-    const newDesc = newDescInput !== "" && newDescInput || undefined;
-    const newDate = newDateInput !== "" && new Date(newDateInput) || undefined;
-    const newEndDate = newDateInput !== "" && new Date(newEndDateInput) || undefined;
-    
-    if(newDate && isNaN(newDate.getTime())  ||  newEndDate && isNaN(newEndDate.getTime())){
-        await interaction.reply({ content: "Invalid date format! Please use YYYY-MM-DD HH:MM UTC.", ephemeral: true });
+    const newGame = newGameInput !== "" ? newGameInput : undefined;
+    const newDesc = newDescInput !== "" ? newDescInput : undefined;
+    const newDate = newDateInput !== "" ? new Date(newDateInput) : undefined;
+    const newEndDate = newEndDateInput !== "" ? new Date(newEndDateInput) : undefined;
+
+    if ((newDate && isNaN(newDate.getTime())) || (newEndDate && isNaN(newEndDate.getTime()))) {
+        await interaction.reply({ content: "Invalid date format! Please use YYYY-MM-DD HH:MM UTC.", flags: MessageFlags.Ephemeral });
         return;
     }
-    
-    const updateFields: Record<string, any> = {};
-    if (newGame) updateFields.InfGame = newGame;
-    if (newDesc) updateFields.InfAdditional = newDesc;
-    if (newDate) updateFields.ScheduledAt = newDate;
-    if (newEndDate) updateFields.ScheduledEndAt = newEndDate;
 
-    if (Object.keys(updateFields).length > 0) {
-        await EventSchema.updateOne({ _id: EventData._id.toString() }, { $set: updateFields });
-        const discordTimestamp = (newDate && `<t:${Math.floor(newDate.getTime() / 1000)}:F>`) || undefined;
-        const discordEndTimestamp = (newEndDate && `<t:${Math.floor(newEndDate.getTime() / 1000)}:F>`) || undefined;
+    await updateEventInformation(interaction.client, EventData._id.toString(), {
+        newGame,
+        newDesc,
+        newDate,
+        newEndDate
+    });
 
-        if (newGame) ServerEvent?.setName(`Game Night - ${newGame} 🎮`);
-        if (newDesc) ServerEvent?.setDescription(newDesc);
+    const discordTimestamp = newDate ? `<t:${Math.floor(newDate.getTime() / 1000)}:F>` : undefined;
+    const discordEndTimestamp = newEndDate ? `<t:${Math.floor(newEndDate.getTime() / 1000)}:F>` : undefined;
 
-        await interaction.reply({
-            content: `✅ Game information updated successfully.\nNew game: **${(newGame && newGame + " ✅" )|| "Not updated ❌"}**\nNew additional information: **${(newDesc && newDesc + " ✅" )|| "Not updated ❌"}**\nNew date: **${(discordTimestamp && discordTimestamp + " ✅") || "Not updated ❌" }**\nNew date: **${(discordEndTimestamp && discordEndTimestamp + " ✅") || "Not updated ❌" }**`,
-            ephemeral: true
-        });
-    } else {
-        await interaction.reply({
-            content: "⚠ No changes were provided.",
-            ephemeral: true
-        });
-    }
+    await interaction.reply({
+        content: `✅ Game information updated successfully.\n` +
+            `New game: **${(newGame && newGame + " ✅") || "Not updated ❌"}**\n` +
+            `New additional information: **${(newDesc && newDesc + " ✅") || "Not updated ❌"}**\n` +
+            `New date: **${(discordTimestamp && discordTimestamp + " ✅") || "Not updated ❌"}**\n` +
+            `New end date: **${(discordEndTimestamp && discordEndTimestamp + " ✅") || "Not updated ❌"}**`,
+        flags: MessageFlags.Ephemeral
+    });
 }
 
 async function muteVC(interaction: ButtonInteraction, EventData: GnEventData, SetMute : boolean = true) {
     const guild = interaction.guild;
-    if (!guild) return interaction.reply({ content: "⚠️ Guild not found.", ephemeral: true });
+    if (!guild) return interaction.reply({ content: "⚠️ Guild not found.", flags: MessageFlags.Ephemeral });
     const EventVoiceChannel = guild?.scheduledEvents.cache.get(EventData.ServerEventID)?.channel?.id;
 
 
     const voiceChannel = guild.channels.cache.find(c => c.id === EventVoiceChannel);
     if (!voiceChannel || !voiceChannel.isVoiceBased()) {
-        return interaction.reply({ content: "⚠️ Voice channel not found.", ephemeral: true });
+        return interaction.reply({ content: "⚠️ Voice channel not found.", flags: MessageFlags.Ephemeral });
     }
 
     for (const member of voiceChannel.members.values()) {
@@ -190,7 +183,7 @@ async function muteVC(interaction: ButtonInteraction, EventData: GnEventData, Se
         }
     }
 
-    await interaction.reply({ content: `🔇 All members in the event VC have been ${SetMute ? "muted" : "unmuted"}.`, ephemeral: true });
+    await interaction.reply({ content: `🔇 All members in the event VC have been ${SetMute ? "muted" : "unmuted"}.`, flags: MessageFlags.Ephemeral });
 }
 
 
@@ -199,11 +192,11 @@ async function GNhandleRSVP(interaction: ButtonInteraction, action: string, even
     try {
         const event = await EventSchema.findById(eventId);
         if (!event) {
-            await interaction.reply({ content: "This event no longer exists.", ephemeral: true });
+            await interaction.reply({ content: "This event no longer exists.", flags: MessageFlags.Ephemeral });
             return;
         }
         if(event.Status == "Completed" || event.Status == "Cancelled"){
-            await interaction.reply({ content: "This event was already completed or cancelled.", ephemeral: true });
+            await interaction.reply({ content: "This event was already completed or cancelled.", flags: MessageFlags.Ephemeral });
             return;
         }
 
@@ -242,12 +235,12 @@ async function GNhandleRSVP(interaction: ButtonInteraction, action: string, even
 
         await interaction.reply({
             content: `✅ You have marked yourself as **${action.toUpperCase()}** for this event!${!XPRecieved ? `\n⭐ You've gained **10 XP** for reacting!` : ""}`,
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
         });
 
     } catch (error) {
         console.error("Error handling RSVP:", error);
-        await interaction.reply({ content: "An error occurred while processing your response.", ephemeral: true });
+        await interaction.reply({ content: "An error occurred while processing your response.", flags: MessageFlags.Ephemeral });
     }
 }
 

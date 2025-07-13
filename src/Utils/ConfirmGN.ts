@@ -1,4 +1,4 @@
-import { ButtonInteraction, GuildScheduledEventCreateOptions, TextChannel, ButtonBuilder, ActionRowBuilder, ButtonStyle, Interaction, ChatInputCommandInteraction } from "discord.js";
+import { ButtonInteraction, GuildScheduledEventCreateOptions, TextChannel, ButtonBuilder, ActionRowBuilder, ButtonStyle, Interaction, ChatInputCommandInteraction, MessageFlags } from "discord.js";
 import GameNight from "../MongoDB/models/GameNight"
 import GuildConfigs from "../MongoDB/models/GuildConfig";
 
@@ -7,7 +7,7 @@ import GuildConfigs from "../MongoDB/models/GuildConfig";
 
 export default async function(appCommandInteraction: ChatInputCommandInteraction, buttonInteraction: ButtonInteraction) {
     if (!buttonInteraction.guild) {
-        await buttonInteraction.reply({ content: "This command must be used in a server!", ephemeral: true });
+        await buttonInteraction.reply({ content: "This command must be used in a server!", flags: MessageFlags.Ephemeral });
         return;
     }
 
@@ -105,9 +105,9 @@ export default async function(appCommandInteraction: ChatInputCommandInteraction
             components: []
         });
 
-    } catch (error) {
+    } catch (error) { 
         console.error("Error creating game night:", error);
-        await buttonInteraction.reply({ content: "An error occurred while creating the event.", ephemeral: true });
+        await buttonInteraction.reply({ content: "An error occurred while creating the event.", flags: MessageFlags.Ephemeral });
     }
 }
 

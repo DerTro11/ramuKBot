@@ -179,3 +179,69 @@ export async function startEvent(EventId: string, client : Client) : Promise<voi
     }
 }
 
+
+export async function updateEventInformation(client: Client, eventId: string, updates: {
+    newGame?: string,
+    newDesc?: string,
+    newDate?: Date,
+    newEndDate?: Date
+}) {
+    const storedEvent = await EventSchema.findById(eventId);
+    if (!storedEvent) throw new Error("Event not found");
+
+    const updateFields: Record<string, any> = {};
+    if (updates.newGame) updateFields.InfGame = updates.newGame;
+    if (updates.newDesc) updateFields.InfAdditional = updates.newDesc;
+    if (updates.newDate) updateFields.ScheduledAt = updates.newDate;
+    if (updates.newEndDate) updateFields.ScheduledEndAt = updates.newEndDate;
+
+    await EventSchema.updateOne({ _id: storedEvent._id }, { $set: updateFields });
+
+    const guild = await client.guilds.fetch(storedEvent.GuildId);
+    const serverEvent = guild.scheduledEvents.cache.get(storedEvent.ServerEventID);
+    if (updates.newGame) await serverEvent?.setName(`Game Night - ${updates.newGame} 🎮`);
+    if (updates.newDesc) await serverEvent?.setDescription(updates.newDesc);
+
+    // Update the original shout message if it exists
+    const guildConfig = await GuildConfig.findOne({ GuildID: storedEvent.GuildId });
+    if (storedEvent.ShoutMsgId && guildConfig?.ShoutChnlID) {
+        const channel = guild.channels.cache.get(guildConfig.ShoutChnlID) as TextChannel;
+        try {
+            const message = await channel.messages.fetch(storedEvent.ShoutMsgId);
+
+            const eventTimestamp = Math.floor((updates.newDate?.getTime() || storedEvent.ScheduledAt.getTime()) / 1000);
+            const eventEndTimestamp = Math.floor((updates.newEndDate?.getTime() || storedEvent.ScheduledEndAt.getTime()) / 1000);
+            const eventDurationMin = Math.round((updates.newEndDate?.getTime() || storedEvent.ScheduledEndAt.getTime() - (updates.newDate?.getTime() || storedEvent.ScheduledAt.getTime())) / 60000);
+            
+            await message.edit({
+                content: `@everyone\n# 🎉 **Game Night Scheduled!** 🎉\n\n📅 **Date:** <t:${eventTimestamp}:F>\n⏱️ **Duration: ${eventDurationMin} Minutes**\n🎮 **Game:** ${updates.newGame || storedEvent.InfGame}\nℹ️ **Info:** ${updates.newDesc || storedEvent.InfAdditional}\n👑 **Host:** <@${storedEvent.HostDCId}>\n\n[Join Event](https://discord.com/events/${storedEvent.GuildId}/${storedEvent.ServerEventID})`
+            });
+        } catch (err) {
+            console.error("❌ Failed to update shout message:", err);
+        }
+    }
+}
+
+export async function isChannelAvailableForEvent(
+    guildId: string,
+    channelId: string,
+    startDate: Date,
+    endDate: Date
+): Promise<{ available: boolean, conflictingEvent?: any }> {
+
+    const conflictingEvent = await EventSchema.findOne({
+        GuildId: guildId,
+        VCChnlId: channelId,
+        Status: { $in: ["Scheduled", "Active"] },
+        $or: [
+            { ScheduledAt: { $gte: startDate, $lt: endDate } },
+            { ScheduledEndAt: { $gt: startDate, $lte: endDate } },
+            { ScheduledAt: { $lte: startDate }, ScheduledEndAt: { $gte: endDate } }
+        ]
+    });
+
+    return {
+        available: !conflictingEvent,
+        conflictingEvent: conflictingEvent || null
+    };
+}

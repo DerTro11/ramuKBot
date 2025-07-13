@@ -1,4 +1,4 @@
-import {ChannelType, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
+import {ChannelType, MessageFlags, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
 import GuildConfig from "./../../MongoDB/models/GuildConfig";
 import { Command } from "types";
 
@@ -39,7 +39,7 @@ const CommandBody = new SlashCommandBuilder()
 export const Cmd: Command = {
     CommandBody: CommandBody,
     async execute(Interaction) {
-        await Interaction.deferReply({ ephemeral: true });
+        await Interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
         const subcommand = Interaction.options.getSubcommand();
         const guildId = Interaction.guild?.id;

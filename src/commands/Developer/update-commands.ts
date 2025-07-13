@@ -1,4 +1,4 @@
-import { EmbedBuilder, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
+import { EmbedBuilder, MessageFlags, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
 import { Command } from "../../types";
 import DeployCommands from "../DeployCommands";
 
@@ -29,9 +29,10 @@ const RemoveControlChars = (String: string) =>  String
 
 export const Cmd : Command = {
     CommandBody: CommandBody,
+    hqCommand: true,
     async execute(Interaction) {
         if(CommandExecuted) {
-            await Interaction.reply({ephemeral: true, content: 'Sorry this command is currently under cooldown.'});
+            await Interaction.reply({flags: MessageFlags.Ephemeral, content: 'Sorry this command is currently under cooldown.'});
             return;
         };
         
