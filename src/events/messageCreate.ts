@@ -18,14 +18,19 @@ const Handler : EventHandler<"messageCreate"> = {
         const now = Date.now();
 
         const lastXP = chatXPCooldowns.get(key);
-        if (lastXP && now - lastXP < cooldown) return; // ⏳ still on cooldown
+        if (lastXP && now - lastXP < (guildConfig.ChatXPCooldownMs || cooldown)) return; // ⏳ still on cooldown
 
         chatXPCooldowns.set(key, now); // ✅ store timestamp
 
-        const xpAddResult = await addXPToUser(message.author.id, message.guild.id, 1);
+        const xpAddResult = await addXPToUser(message.author.id, message.guild.id, guildConfig.ChatXPAmount || 1);
         
         if (xpAddResult.rankedUp) {
-            await message.reply(`🎉 <@${message.author.id}> ranked up to **Rank ${xpAddResult.newRank}**!`);
+            try {
+                await message.reply(`🎉 <@${message.author.id}> ranked up to **Rank ${xpAddResult.newRank}**!`);
+            } catch (error) {
+                console.log(`Failed to send rank up reply: ${error}`);
+            }
+
         }
 
     },

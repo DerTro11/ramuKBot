@@ -3,6 +3,8 @@ import { ButtonInteraction, Interaction, GuildMember, ModalBuilder, TextInputBui
 import {startEvent, cancelEvent, completeEvent, updateEventInformation} from "../../Services/EventService";
 import EventSchema from "../../MongoDB/models/GameNight"; 
 import UserData from "../../MongoDB/models/UserData";
+import GuildConfig from "../../MongoDB/models/GuildConfig";
+
 
 const HostCmds = ["cancel", "edit", "mute", "end", "start"] // Buttons which can only be pressed by a host
 
@@ -88,6 +90,12 @@ async function pressEndEvent(interaction: ButtonInteraction, EventData: GnEventD
 }
 
 async function editEvent(interaction: ButtonInteraction, EventData: GnEventData) {
+
+    if( !(EventData.Status === GnEventStatus.Scheduled || EventData.Status === GnEventStatus.Active)){
+        await interaction.reply({ content: "❌ Can only edit event information, if it is of status scheduled or active.", flags: MessageFlags.Ephemeral });
+        return;
+    }
+
     const modal = new ModalBuilder()
         .setCustomId(`changeGameModal_${EventData._id.toString()}`)
         .setTitle("Change Game Information");
@@ -169,6 +177,10 @@ async function handleModalSubmission(interaction: ModalSubmitInteraction) {
 async function muteVC(interaction: ButtonInteraction, EventData: GnEventData, SetMute : boolean = true) {
     const guild = interaction.guild;
     if (!guild) return interaction.reply({ content: "⚠️ Guild not found.", flags: MessageFlags.Ephemeral });
+    if( !(EventData.Status === GnEventStatus.Active)){
+        await interaction.reply({ content: "❌ Can only mute if event is Active.", flags: MessageFlags.Ephemeral });
+        return;
+    }
     const EventVoiceChannel = guild?.scheduledEvents.cache.get(EventData.ServerEventID)?.channel?.id;
 
 
@@ -223,18 +235,21 @@ async function GNhandleRSVP(interaction: ButtonInteraction, action: string, even
             event.ReactedUsers.Users_Decline.push(userId);
         }
 
+        const guildConfig = await GuildConfig.findOne({GuildID: event.GuildId})
+
         await event.save();
+
 
         if(!XPRecieved){
             await UserData.updateOne(
                 {UserId: userId},
-                { $inc: { [`ServerXP.${event.GuildId}`]: 10 } },
+                { $inc: { [`ServerXP.${event.GuildId}`]: guildConfig?.ReactionXPAmount || 10 } },
                 { upsert: true }
             );
         }
 
         await interaction.reply({
-            content: `✅ You have marked yourself as **${action.toUpperCase()}** for this event!${!XPRecieved ? `\n⭐ You've gained **10 XP** for reacting!` : ""}`,
+            content: `✅ You have marked yourself as **${action.toUpperCase()}** for this event!${!XPRecieved ? `\n⭐ You've gained **${guildConfig?.ReactionXPAmount || 10} XP** for reacting!` : ""}`,
             flags: MessageFlags.Ephemeral
         });
 
