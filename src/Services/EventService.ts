@@ -179,3 +179,26 @@ export async function startEvent(EventId: string, client : Client) : Promise<voi
     }
 }
 
+export async function isChannelAvailableForEvent(
+    guildId: string,
+    channelId: string,
+    startDate: Date,
+    endDate: Date
+): Promise<{ available: boolean, conflictingEvent?: any }> {
+
+    const conflictingEvent = await EventSchema.findOne({
+        GuildId: guildId,
+        VCChnlId: channelId,
+        Status: { $in: ["Scheduled", "Active"] },
+        $or: [
+            { ScheduledAt: { $gte: startDate, $lt: endDate } },
+            { ScheduledEndAt: { $gt: startDate, $lte: endDate } },
+            { ScheduledAt: { $lte: startDate }, ScheduledEndAt: { $gte: endDate } }
+        ]
+    });
+
+    return {
+        available: !conflictingEvent,
+        conflictingEvent: conflictingEvent || null
+    };
+}

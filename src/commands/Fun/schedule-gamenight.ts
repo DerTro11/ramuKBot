@@ -3,6 +3,7 @@ import { Command } from "types";
 import handleGameNightConfirmation from "../../Utils/ConfirmGN"
 import GuildConfigs from "../../MongoDB/models/GuildConfig";
 import GameNight from "../../MongoDB/models/GameNight";
+import { isChannelAvailableForEvent } from "../../Services/EventService";
 
 const CommandBody = new SlashCommandBuilder()
     .setName("schedule-gamenight")
@@ -89,27 +90,23 @@ export const Cmd: Command = {
         }
 
         // Check if the channel is already taken within the selected timeframe
-        const conflictingEvent = await GameNight.findOne({
-            GuildId: Interaction.guild?.id,
-            VCChnlId: eventVCChnl?.id,
-            Status: { $in: ["Scheduled", "Active"] },
-            $or: [
-                // Existing event starts within the new event's timeframe
-                { ScheduledAt: { $gte: eventDate, $lt: endDate } },
-                // Existing event ends within the new event's timeframe
-                { ScheduledEndAt: { $gt: eventDate, $lte: endDate } },
-                // Existing event completely overlaps the new event
-                { ScheduledAt: { $lte: eventDate }, ScheduledEndAt: { $gte: endDate } }
-            ]
-        });
+        if(!Interaction.guild) return;
+        const { available, conflictingEvent } = await isChannelAvailableForEvent(
+            Interaction.guild.id,
+            eventVCChnl.id,
+            eventDate,
+            endDate
+        );
 
-        if (conflictingEvent) {
+        if (!available) {
             await Interaction.reply({
-                content: `❌ The selected voice channel <#${eventVCChnl?.id}> is already booked during this timeframe.\nEvent: **${conflictingEvent.InfGame}** from **${conflictingEvent.ScheduledAt.toUTCString()}** to **${conflictingEvent.ScheduledEndAt.toUTCString()}**.`,
+                content: `❌ The selected voice channel <#${eventVCChnl.id}> is already booked during this timeframe.\n` +
+                        `Event: **${conflictingEvent.InfGame}** from **${conflictingEvent.ScheduledAt.toUTCString()}** to **${conflictingEvent.ScheduledEndAt.toUTCString()}**.`,
                 ephemeral: true
             });
             return;
         }
+
         
 
         // Create timestamp for Discord

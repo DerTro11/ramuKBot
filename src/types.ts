@@ -3,7 +3,8 @@ import mongoose from "mongoose";
 
 export interface Command {
     CommandBody:  SlashCommandBuilder,
-    execute: (Interaction: ChatInputCommandInteraction) => void | Promise<void>
+    execute: (Interaction: ChatInputCommandInteraction) => void | Promise<void>,
+    hqCommand?: boolean
 }
 
 type EventName = keyof ClientEvents;

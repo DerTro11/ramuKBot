@@ -29,6 +29,7 @@ const RemoveControlChars = (String: string) =>  String
 
 export const Cmd : Command = {
     CommandBody: CommandBody,
+    hqCommand: true,
     async execute(Interaction) {
         if(CommandExecuted) {
             await Interaction.reply({ephemeral: true, content: 'Sorry this command is currently under cooldown.'});
