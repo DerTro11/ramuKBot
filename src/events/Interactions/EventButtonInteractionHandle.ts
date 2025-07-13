@@ -1,6 +1,6 @@
 import {AppInteraction, GnEventData, GnEventStatus} from "../../types";
 import { ButtonInteraction, Interaction, GuildMember, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, ModalSubmitInteraction, GuildScheduledEventStatus, MessageFlags } from "discord.js";
-import {startEvent, cancelEvent, completeEvent} from "../../Services/EventService";
+import {startEvent, cancelEvent, completeEvent, updateEventInformation} from "../../Services/EventService";
 import EventSchema from "../../MongoDB/models/GameNight"; 
 import UserData from "../../MongoDB/models/UserData";
 
@@ -129,48 +129,41 @@ async function handleModalSubmission(interaction: ModalSubmitInteraction) {
     if (!interaction.customId.startsWith("changeGameModal_")) return;
 
     const EventData = await EventSchema.findById(interaction.customId.split("_")[1]);
-    if(!EventData) return;
-    const ServerEvent = interaction.guild?.scheduledEvents.cache.get( EventData?.ServerEventID );
+    if (!EventData) return;
 
     const newGameInput = interaction.fields.getTextInputValue("newGameName");
-    const newDescInput =  interaction.fields.getTextInputValue("newEventDesc");
+    const newDescInput = interaction.fields.getTextInputValue("newEventDesc");
     const newDateInput = interaction.fields.getTextInputValue("newDate");
     const newEndDateInput = interaction.fields.getTextInputValue("newEndDate");
 
-    const newGame = newGameInput !== "" && newGameInput || undefined;
-    const newDesc = newDescInput !== "" && newDescInput || undefined;
-    const newDate = newDateInput !== "" && new Date(newDateInput) || undefined;
-    const newEndDate = newDateInput !== "" && new Date(newEndDateInput) || undefined;
-    
-    if(newDate && isNaN(newDate.getTime())  ||  newEndDate && isNaN(newEndDate.getTime())){
+    const newGame = newGameInput !== "" ? newGameInput : undefined;
+    const newDesc = newDescInput !== "" ? newDescInput : undefined;
+    const newDate = newDateInput !== "" ? new Date(newDateInput) : undefined;
+    const newEndDate = newEndDateInput !== "" ? new Date(newEndDateInput) : undefined;
+
+    if ((newDate && isNaN(newDate.getTime())) || (newEndDate && isNaN(newEndDate.getTime()))) {
         await interaction.reply({ content: "Invalid date format! Please use YYYY-MM-DD HH:MM UTC.", flags: MessageFlags.Ephemeral });
         return;
     }
-    
-    const updateFields: Record<string, any> = {};
-    if (newGame) updateFields.InfGame = newGame;
-    if (newDesc) updateFields.InfAdditional = newDesc;
-    if (newDate) updateFields.ScheduledAt = newDate;
-    if (newEndDate) updateFields.ScheduledEndAt = newEndDate;
 
-    if (Object.keys(updateFields).length > 0) {
-        await EventSchema.updateOne({ _id: EventData._id.toString() }, { $set: updateFields });
-        const discordTimestamp = (newDate && `<t:${Math.floor(newDate.getTime() / 1000)}:F>`) || undefined;
-        const discordEndTimestamp = (newEndDate && `<t:${Math.floor(newEndDate.getTime() / 1000)}:F>`) || undefined;
+    await updateEventInformation(interaction.client, EventData._id.toString(), {
+        newGame,
+        newDesc,
+        newDate,
+        newEndDate
+    });
 
-        if (newGame) ServerEvent?.setName(`Game Night - ${newGame} 🎮`);
-        if (newDesc) ServerEvent?.setDescription(newDesc);
+    const discordTimestamp = newDate ? `<t:${Math.floor(newDate.getTime() / 1000)}:F>` : undefined;
+    const discordEndTimestamp = newEndDate ? `<t:${Math.floor(newEndDate.getTime() / 1000)}:F>` : undefined;
 
-        await interaction.reply({
-            content: `✅ Game information updated successfully.\nNew game: **${(newGame && newGame + " ✅" )|| "Not updated ❌"}**\nNew additional information: **${(newDesc && newDesc + " ✅" )|| "Not updated ❌"}**\nNew date: **${(discordTimestamp && discordTimestamp + " ✅") || "Not updated ❌" }**\nNew date: **${(discordEndTimestamp && discordEndTimestamp + " ✅") || "Not updated ❌" }**`,
-            flags: MessageFlags.Ephemeral
-        });
-    } else {
-        await interaction.reply({
-            content: "⚠ No changes were provided.",
-            flags: MessageFlags.Ephemeral
-        });
-    }
+    await interaction.reply({
+        content: `✅ Game information updated successfully.\n` +
+            `New game: **${(newGame && newGame + " ✅") || "Not updated ❌"}**\n` +
+            `New additional information: **${(newDesc && newDesc + " ✅") || "Not updated ❌"}**\n` +
+            `New date: **${(discordTimestamp && discordTimestamp + " ✅") || "Not updated ❌"}**\n` +
+            `New end date: **${(discordEndTimestamp && discordEndTimestamp + " ✅") || "Not updated ❌"}**`,
+        flags: MessageFlags.Ephemeral
+    });
 }
 
 async function muteVC(interaction: ButtonInteraction, EventData: GnEventData, SetMute : boolean = true) {
