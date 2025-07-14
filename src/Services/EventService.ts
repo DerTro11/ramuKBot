@@ -49,7 +49,7 @@ export async function completeEvent(EventId: string, client : Client) : Promise<
 
     // Distribuit XP
     const guildConfig = await GuildConfig.findOne({ GuildID: storedEvent.GuildId });
-    const xpPerMin = guildConfig?.EventXPPerMinute || 10;
+    const xpPerMin = guildConfig?.EventXPPerMinute || 5;
 
     const durationMin = (actualCompletion.getTime()  - storedEvent.ScheduledAt.getTime()) / 60000;
     const minRequired = durationMin * 0.25;
