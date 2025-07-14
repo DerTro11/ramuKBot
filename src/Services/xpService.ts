@@ -1,4 +1,9 @@
 import UserData from "../MongoDB/models/UserData";
+import { GuildMember } from "discord.js";
+import { RankConfigModel } from "../MongoDB/models/RankConfig";
+
+
+
 // xpService.ts
 
 /**
@@ -69,4 +74,69 @@ export async function addXPToUser(userId: string, guildId: string, amount: numbe
         newRank,
         rankedUp: newRank > oldRank
     };
+}
+
+
+
+export async function giveCumulativeRankRewards(guildMember: GuildMember) {
+
+    const userDoc = await UserData.findOne({UserId: guildMember.id})
+    const guildId = guildMember.guild.id;
+    const userXP = userDoc?.ServerXP[guildId];
+    if(!userXP) return { roles: [], prefix: undefined };
+    const userRank = getRankFromXP(userXP);
+
+    const config = await RankConfigModel.findOne({ GuildID: guildId });
+    if (!config || !config.ranks) return { roles: [], prefix: undefined };
+
+    const allRanks = config.ranks;
+    const rolesToGive = new Set<string>();
+    let latestPrefix: string | undefined;
+    const allPrefixes: string[] = [];
+
+    for (let i = 1; i <= userRank; i++) {
+        const rankCfg = allRanks[i.toString()];
+        if (!rankCfg) continue;
+
+        // Collect all roles up to this rank
+        rankCfg.roleRewards?.forEach(roleId => rolesToGive.add(roleId));
+
+        // Collect all prefixes, latest one takes priority
+        if (rankCfg.prefix) {
+            latestPrefix = rankCfg.prefix;
+            allPrefixes.push(rankCfg.prefix);
+        }
+    }
+
+    // Clean nickname of any existing prefix
+    let newNickname = guildMember.nickname || guildMember.user.username;
+    for (const prefix of allPrefixes) {
+        if (newNickname.startsWith(prefix)) {
+            newNickname = newNickname.slice(prefix.length).trimStart();
+        }
+    }
+
+    // Apply latest prefix
+    if (latestPrefix) {
+        newNickname = `${latestPrefix} ${newNickname}`;
+        try {
+            await guildMember.setNickname(newNickname);
+        } catch (err) {
+            console.warn(`Failed to set nickname for ${guildMember.id}:`, err);
+        }
+    }
+
+    const rolesAdded: string[] = [];
+    for (const roleId of rolesToGive) {
+        if (!guildMember.roles.cache.has(roleId)) {
+            try {
+                await guildMember.roles.add(roleId);
+                rolesAdded.push(roleId);
+            } catch (err) {
+                console.warn(`Failed to add role ${roleId} to ${guildMember.id}:`, err);
+            }
+        }
+    }
+
+    return { roles: rolesAdded, prefix: latestPrefix };
 }

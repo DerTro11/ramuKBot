@@ -9,12 +9,13 @@ import {
     MessageFlags
 } from "discord.js";
 
-import { Command } from "types";
+import { Command, RankSubConfig } from "types";
 import { getTotalXPForRank } from "../../Services/xpService";
+import { RankConfigModel } from "../../MongoDB/models/RankConfig";
 
 const RANKS_PER_PAGE = 10;
 
-function buildRankEmbed(page: number, ranksPerPage: number = RANKS_PER_PAGE) {
+function buildRankEmbed(page: number, ranksPerPage: number = RANKS_PER_PAGE, rankConfig?: { [rankId: string]: RankSubConfig }) {
     const embed = new EmbedBuilder()
         .setTitle("📋 Rank Table")
         .setColor(0x5865f2)
@@ -24,11 +25,19 @@ function buildRankEmbed(page: number, ranksPerPage: number = RANKS_PER_PAGE) {
     const end = start + ranksPerPage;
 
     for (let i = start + 1; i <= end; i++) {
+        const config = rankConfig?.[i.toString()];
         const xp = getTotalXPForRank(i);
+
+        const name = config?.name || "-";
+        const prefix = config?.prefix ? `\`${config.prefix}\`` : "-";
+        const roles = config?.roleRewards?.length
+            ? config.roleRewards.map(id => `<@&${id}>`).join(", ")
+            : "-";
+
         embed.addFields({
             name: `#${i}`,
-            value: `XP Required: **${xp}**\nName: –`,
-            inline: true
+            value: `XP Required: **${xp}**\nName: **${name}**\nPrefix: ${prefix}\nRoles: ${roles}`,
+            inline: false
         });
     }
 
@@ -51,6 +60,9 @@ export const Cmd: Command = {
         const inputRank = interaction.options.getInteger("rank");
         const targetPage = inputRank ? Math.floor((inputRank - 1) / RANKS_PER_PAGE) : 0;
 
+        const rankConfig = await RankConfigModel.findOne({GuildID: interaction.guildId})
+
+        
         await interaction.deferReply();
 
         let currentPage = targetPage;
@@ -71,7 +83,7 @@ export const Cmd: Command = {
             );
 
         const msg = await interaction.editReply({
-            embeds: [buildRankEmbed(currentPage)],
+            embeds: [buildRankEmbed(currentPage, undefined, rankConfig?.ranks)],
             components: [getButtons()]
         });
 
@@ -90,7 +102,7 @@ export const Cmd: Command = {
             else if (i.customId === "next") currentPage++;
 
             await i.update({
-                embeds: [buildRankEmbed(currentPage)],
+                embeds: [buildRankEmbed(currentPage, undefined, rankConfig?.ranks)],
                 components: [getButtons()]
             });
         });

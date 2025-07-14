@@ -55,3 +55,9 @@ export enum GnEventStatus {
     Cancelled = "Cancelled",
     Completed = "Completed"
 }
+
+export interface RankSubConfig {
+    name?: string;
+    roleRewards?: string[];
+    prefix?: string;
+}
