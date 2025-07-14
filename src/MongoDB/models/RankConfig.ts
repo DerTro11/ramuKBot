@@ -3,7 +3,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 interface RankSubConfig {
     name?: string;
     roleRewards?: string[];
-    Prefix?: string;
+    prefix?: string;
 }
 
 interface RankConfigDocument extends Document {
@@ -15,14 +15,14 @@ const RankSubConfigSchema = new Schema<RankSubConfig>(
     {
         name: { type: String },
         roleRewards: { type: [String] },
-        Prefix: { type: String },
+        prefix: { type: String },
     },
     { _id: false }
 );
 
 const RankConfigSchema = new Schema<RankConfigDocument>({
     GuildID: { type: String, required: true, unique: true },
-    ranks: { type: [RankSubConfigSchema], default: {}, },
+    ranks: { type: Schema.Types.Mixed, default: {}, },
 }, { collection: "RankConfig", versionKey: false });
 
 export const RankConfigModel = mongoose.model<RankConfigDocument>('RankConfig', RankConfigSchema);
