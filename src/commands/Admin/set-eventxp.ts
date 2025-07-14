@@ -22,7 +22,7 @@ export const Cmd : Command = {
 
         const amount = Interaction.options.getInteger("amount", true);
 
-        const update = amount !== 10 
+        const update = amount !== 5 
             ? { $set: { EventXPPerMinute: amount } } 
             : { $unset: { EventXPPerMinute: "" } };
         
