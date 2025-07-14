@@ -1,10 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { RankSubConfig } from 'types';
 
-interface RankSubConfig {
-    name?: string;
-    roleRewards?: string[];
-    prefix?: string;
-}
+
 
 interface RankConfigDocument extends Document {
     GuildID: string;

@@ -1,6 +1,7 @@
 import { EmbedBuilder, MessageFlags, SlashCommandBuilder } from "discord.js";
 import { Command } from "types";
 import UserData from "./../../MongoDB/models/UserData";
+import { RankConfigModel } from "../../MongoDB/models/RankConfig";
 import { getRankFromXP, getTotalXPForRank, getRemainingXPToNextRank } from "../../Services/xpService";
 
 const CommandBody = new SlashCommandBuilder()
@@ -31,6 +32,7 @@ export const Cmd : Command = {
         }
 
         const userDocument = await UserData.findOne({ UserId: userToFetch.id });
+        const rankConfig = await RankConfigModel.findOne({GuildID: guildId})
 
         if (!userDocument) {
             await Interaction.editReply({
@@ -42,6 +44,9 @@ export const Cmd : Command = {
         const xpAmount = userDocument.ServerXP[guildId] || 0;
         const rank = getRankFromXP(xpAmount);
         const xpRemaining = getRemainingXPToNextRank(xpAmount);
+        const rankName = rankConfig?.ranks[rank.toString()]?.name
+        const rankLabel = rankName ? `**${rankName}** (${rank})` : rank.toString()
+
 
         const embed = new EmbedBuilder()
             .setTitle("📊 XP Lookup Successful!")
@@ -49,7 +54,7 @@ export const Cmd : Command = {
             .addFields(
                 { name: "👤 User", value: `<@${userToFetch.id}>`, inline: false },
                 { name: "⭐ XP", value: `${xpAmount}`, inline: false },
-                { name: "🏅 Rank", value: `${rank}`, inline: false },
+                { name: "🏅 Rank", value: `${rankLabel}`, inline: false },
                 { name: "📈 Next Rank in", value: `${xpRemaining} XP`, inline: false }
             )
             .setFooter({ text: `XP data for ${Interaction.guild?.name}` })
