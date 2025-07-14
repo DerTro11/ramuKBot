@@ -61,7 +61,8 @@ export async function completeEvent(EventId: string, client : Client) : Promise<
     
         const isBonusEligible = 
             storedEvent.ReactedUsers?.Users_Accept.includes(userId) &&
-            minutes >= bonusThreshold;
+            minutes >= bonusThreshold &&
+            ((guildConfig?.EventBonusMultiplier || 1.5) > 1);
 
         const xpRaw = minutes * xpPerMin;
         const xp = isBonusEligible ? Math.floor(xpRaw * (guildConfig?.EventBonusMultiplier || 1.5)) : xpRaw;

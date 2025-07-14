@@ -140,3 +140,13 @@ export async function giveCumulativeRankRewards(guildMember: GuildMember) {
 
     return { roles: rolesAdded, prefix: latestPrefix };
 }
+
+
+export async function getRankName(rank: string, guildId: string) {
+
+    const rankConfig = await RankConfigModel.findOne({GuildID: guildId})
+    const rankName = rankConfig?.ranks[rank.toString()]?.name
+        
+    if(rankName) return rankName
+    else return null
+}
