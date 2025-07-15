@@ -5,7 +5,7 @@ import EventSchema from "../../MongoDB/models/GameNight";
 import UserData from "../../MongoDB/models/UserData";
 import GuildConfig from "../../MongoDB/models/GuildConfig";
 import AppConfig from "../../AppConfig";
-
+import { refreshControlPanel } from "../../Utils/ControlPanel";
 
 const HostCmds = ["cancel", "edit", "mute", "end", "start"] // Buttons which can only be pressed by a host
 
@@ -36,6 +36,7 @@ async function execute(interaction : Interaction){
         else if (interaction.customId.startsWith("event_accept"))       GNhandleRSVP(interaction, Action, EventId);
         else if (interaction.customId.startsWith("event_unsure"))       GNhandleRSVP(interaction, Action, EventId);
         else if (interaction.customId.startsWith("event_decline"))      GNhandleRSVP(interaction, Action, EventId);
+        else if (interaction.customId.startsWith("event_refreshPanel")) refreshPanel(interaction, EventData)
 
     }catch(err){
         interaction.reply({ content: "An error occured!", flags: MessageFlags.Ephemeral });
@@ -260,6 +261,13 @@ async function GNhandleRSVP(interaction: ButtonInteraction, action: string, even
     }
 }
 
+async function refreshPanel(interaction : ButtonInteraction, EventData : GnEventData){
+    if(!interaction.guild){
+        interaction.reply({ content: "⚠️ Guild not found.", flags: MessageFlags.Ephemeral });
+        return;
+    }
+    await refreshControlPanel(EventData._id.toString(), interaction, interaction.guild)
+}
 
 const exp : AppInteraction = {
     InteractionFilter: (Interaction) => Interaction.isButton() && Interaction.customId.startsWith("event"),
