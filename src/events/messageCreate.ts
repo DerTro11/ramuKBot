@@ -12,7 +12,7 @@ const Handler : EventHandler<"messageCreate"> = {
         if(!message.inGuild() || message.author.bot) return;
         
         const guildConfig = await GuildConfig.findOne({GuildID: message.guild.id})
-        if(!guildConfig?.EnableChatXP) return;
+        if(!guildConfig?.EnableChatXP || guildConfig.ChatXPAmount === 0) return;
 
         const key = `${message.guild.id}:${message.author.id}`;
         const now = Date.now();

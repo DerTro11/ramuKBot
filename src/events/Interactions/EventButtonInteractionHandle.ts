@@ -249,7 +249,7 @@ async function GNhandleRSVP(interaction: ButtonInteraction, action: string, even
         }
 
         await interaction.reply({
-            content: `✅ You have marked yourself as **${action.toUpperCase()}** for this event!${!XPRecieved ? `\n⭐ You've gained **${guildConfig?.ReactionXPAmount || 10} XP** for reacting!` : ""}`,
+            content: `✅ You have marked yourself as **${action.toUpperCase()}** for this event!${!XPRecieved && (guildConfig?.ReactionXPAmount || 1) > 0 ? `\n⭐ You've gained **${guildConfig?.ReactionXPAmount || 10} XP** for reacting!` : ""}`,
             flags: MessageFlags.Ephemeral
         });
 
