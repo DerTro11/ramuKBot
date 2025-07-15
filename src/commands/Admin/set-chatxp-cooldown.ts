@@ -1,6 +1,7 @@
 import { PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
 import GuildConfig from "../../MongoDB/models/GuildConfig";
 import { Command } from "types";
+import AppConfig from "../../AppConfig";
 
 const CommandBody = new SlashCommandBuilder()
 .setName("set-chatxp-cooldown")
@@ -23,7 +24,7 @@ export const Cmd : Command = {
 
         const timeOption = Interaction.options.getInteger("lenght", true);
         
-        const update =  timeOption !== 60 ? {$set: { ChatXPCooldownMs: timeOption*1000} } : { $unset: {ChatXPCooldownMs: ""} };
+        const update =  timeOption !== AppConfig.baseXPAmounts.ChatXPCooldownMs/1000 ? {$set: { ChatXPCooldownMs: timeOption*1000} } : { $unset: {ChatXPCooldownMs: ""} };
         
         const config = await GuildConfig.findOneAndUpdate(
             { GuildID: Interaction.guild?.id },

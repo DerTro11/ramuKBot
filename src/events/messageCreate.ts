@@ -1,10 +1,11 @@
 import {EventHandler} from "../types";
 import GuildConfig from "./../MongoDB/models/GuildConfig";
 import { addXPToUser } from "../Services/xpService";
+import AppConfig from "../AppConfig";
 
 
 const chatXPCooldowns = new Map<string, number>();
-const cooldown = 60_000; 
+const cooldown = AppConfig.baseXPAmounts.ChatXPCooldownMs; 
 
 
 const Handler : EventHandler<"messageCreate"> = {
@@ -22,7 +23,7 @@ const Handler : EventHandler<"messageCreate"> = {
 
         chatXPCooldowns.set(key, now); // ✅ store timestamp
 
-        const xpAddResult = await addXPToUser(message.author.id, message.guild.id, guildConfig.ChatXPAmount || 1);
+        const xpAddResult = await addXPToUser(message.author.id, message.guild.id, guildConfig.ChatXPAmount || AppConfig.baseXPAmounts.ChatXPAmount);
         
         if (xpAddResult.rankedUp) {
             try {
