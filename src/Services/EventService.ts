@@ -54,8 +54,8 @@ export async function completeEvent(EventId: string, client : Client) : Promise<
 
     
     const durationMin = (actualCompletion.getTime()  - storedEvent.ScheduledAt.getTime()) / 60000;
-    const minRequired = durationMin * 0.25;
-    const bonusThreshold = durationMin * 0.5;
+    const minRequired = durationMin * AppConfig.baseXPAmounts.PenaltyXPThreshold_Below;
+    const bonusThreshold = durationMin * AppConfig.baseXPAmounts.BonusXPThreshold_Above;
 
     if(xpPerMin > 0){
         for (const userId in storedEvent.Attendees) {
@@ -106,8 +106,6 @@ export async function completeEvent(EventId: string, client : Client) : Promise<
             const shoutMsg = await announcementChannel.messages.fetch(storedEvent.ShoutMsgId);
 
             const hostMention = `<@${storedEvent.HostDCId}>`;
-            const durationMin = ( actualCompletion.getTime() - storedEvent.ScheduledAt.getTime()) / 60000;
-            const bonusThreshold = durationMin * 0.5;
 
             const attendeeEntries = (Object.entries(storedEvent.Attendees || {}) as [string, number][])
                 .map(([userId, mins]) => {
