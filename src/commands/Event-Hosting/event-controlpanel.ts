@@ -110,6 +110,11 @@ export const Cmd: Command = {
             .setLabel("Unmute VC Members")
             .setStyle(ButtonStyle.Secondary)
             .setDisabled(EventData.Status !== "Active");
+        
+        const refreshButton = new ButtonBuilder()
+            .setCustomId(`event_refreshPanel_${EventId}`)
+            .setLabel("Refresh panel")
+            .setStyle(ButtonStyle.Secondary);
 
         const row1 = new ActionRowBuilder<ButtonBuilder>().addComponents(
             cancelButton,
@@ -119,7 +124,7 @@ export const Cmd: Command = {
             muteButton
         );
 
-        const row2 = new ActionRowBuilder<ButtonBuilder>().addComponents(unmuteButton);
+        const row2 = new ActionRowBuilder<ButtonBuilder>().addComponents(unmuteButton, refreshButton);
 
         const reply = await Interaction.reply({
             embeds: [controlEmbed],
@@ -127,12 +132,24 @@ export const Cmd: Command = {
             flags: MessageFlags.Ephemeral
         });
 
+        /*
+
+        Screw all this fucking shit. Not worth the fucking trouble. Really stupid ass shit fuck
+        FUCK FUCK FUCK THIS SHIT
+        
         const ConfirmCancleCollector = reply.createMessageComponentCollector({componentType: ComponentType.Button});
         
         ConfirmCancleCollector.on("collect", async function(buttonInteraction: ButtonInteraction){
-            if(!buttonInteraction.guild) return;
-            refreshControlPanel(EventId, buttonInteraction.message, buttonInteraction.guild)
-        });
+            try {
+                setTimeout(async () => {
+                    if(!buttonInteraction.guild) return;
+                    await refreshControlPanel(EventId, buttonInteraction, buttonInteraction.guild)
+                }, 2000);
+            } catch (error) {
+                console.log(`Failed to refresh pannel: ${error}`)
+            }
+            
+        });*/
     }
 };
 

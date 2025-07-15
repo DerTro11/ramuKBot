@@ -3,20 +3,23 @@ import {
     ButtonBuilder,
     ButtonStyle,
     EmbedBuilder,
-    TextChannel,
-    Message,
     Guild,
+    ButtonInteraction,
+    MessageFlags,
 } from "discord.js";
-import { GnEventData } from "types";
 import EventSchema from "../MongoDB/models/GameNight"; // adjust path if needed
 
-export async function refreshControlPanel(eventId: string, controlPanelMsg: Message, guild: Guild): Promise<void> {
+export async function refreshControlPanel(eventId: string, interaction: ButtonInteraction, guild: Guild): Promise<void> {
     const EventData = await EventSchema.findById(eventId);
     if (!EventData) {
-        await controlPanelMsg.edit({ content: "⚠️ Event no longer exists.", components: [], embeds: [] });
+        await interaction.update({
+            content: "⚠️ Event no longer exists.",
+            components: [],
+            embeds: [],
+        });
         return;
     }
-
+    
     const scheduledStart = `<t:${Math.floor(EventData.ScheduledAt.getTime() / 1000)}:F>`;
     const scheduledEnd = `<t:${Math.floor(EventData.ScheduledEndAt.getTime() / 1000)}:F>`;
 
@@ -26,6 +29,9 @@ export async function refreshControlPanel(eventId: string, controlPanelMsg: Mess
 
     const acceptedUsers = EventData.ReactedUsers?.Users_Accept || [];
     const acceptedMentions = acceptedUsers.length > 0 ? acceptedUsers.map(id => `<@${id}>`).join(", ") : "_None_";
+
+    const unsureUsers = EventData.ReactedUsers?.Users_Unsure || [];
+    const unsureMentions = unsureUsers.length > 0 ? unsureUsers.map(id => `<@${id}>`).join(", ") : "_None_";
 
     const embed = new EmbedBuilder()
         .setTitle("🎮 Event Control Panel")
@@ -37,6 +43,7 @@ export async function refreshControlPanel(eventId: string, controlPanelMsg: Mess
             { name: "End", value: scheduledEnd, inline: true },
             { name: "Channel", value: `<#${EventData.VCChnlId}>`, inline: true },
             { name: "Accepted Users", value: acceptedMentions, inline: false },
+            { name: "Users who might come", value: unsureMentions, inline: false }
         )
         .setColor("Blue");
 
@@ -67,7 +74,7 @@ export async function refreshControlPanel(eventId: string, controlPanelMsg: Mess
         .setCustomId(`event_edit_${eventId}`)
         .setLabel("Edit Event")
         .setStyle(ButtonStyle.Primary)
-        .setDisabled(false);
+        .setDisabled(EventData.Status === "Completed" || EventData.Status === "Cancelled");
 
     const muteButton = new ButtonBuilder()
         .setCustomId(`event_mute_${eventId}`)
@@ -78,7 +85,14 @@ export async function refreshControlPanel(eventId: string, controlPanelMsg: Mess
     const unmuteButton = new ButtonBuilder()
         .setCustomId(`event_unmute_${eventId}`)
         .setLabel("Unmute VC Members")
-        .setStyle(ButtonStyle.Secondary);
+        .setStyle(ButtonStyle.Secondary)
+        .setDisabled(EventData.Status !== "Active");
+
+    const refreshButton = new ButtonBuilder()
+            .setCustomId(`event_refreshPanel_${eventId}`)
+            .setLabel("Refresh panel")
+            .setStyle(ButtonStyle.Secondary);
+
 
     const row1 = new ActionRowBuilder<ButtonBuilder>().addComponents(
         cancelButton,
@@ -88,11 +102,10 @@ export async function refreshControlPanel(eventId: string, controlPanelMsg: Mess
         muteButton
     );
 
-    const row2 = new ActionRowBuilder<ButtonBuilder>().addComponents(unmuteButton);
+    const row2 = new ActionRowBuilder<ButtonBuilder>().addComponents(unmuteButton, refreshButton);
 
-    await controlPanelMsg.edit({
+    await interaction.update({
         embeds: [embed],
-        components: [row1, row2],
-        content: null,
+        components: [row1, row2]
     });
 }
