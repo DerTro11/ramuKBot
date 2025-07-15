@@ -15,6 +15,9 @@ const GuildConfigSchema = new mongoose.Schema({
     EnableChatXP: { type: Boolean, required: true, default: false },
     ChatXPAmount: { type: Number },
 
+    BonusXPThreshold_Above: {type: Number},
+    PenaltyXPThreshold_Below: {type: Number}
+
 
 }, { collection: "GuildConfigs", versionKey: false });
 

@@ -1,6 +1,7 @@
 import { PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
 import GuildConfig from "../../MongoDB/models/GuildConfig";
 import { Command } from "types";
+import AppConfig from "../../AppConfig";
 
 const CommandBody = new SlashCommandBuilder()
     .setName("set-reactionxp")
@@ -23,7 +24,7 @@ export const Cmd: Command = {
 
         const amount = Interaction.options.getInteger("amount", true);
 
-        const update = amount !== 10
+        const update = amount !== AppConfig.baseXPAmounts.ReactionXPAmount
             ? { $set: { ReactionXPAmount: amount } }
             : { $unset: { ReactionXPAmount: "" } };
 

@@ -1,6 +1,7 @@
 import { PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
 import GuildConfig from "../../MongoDB/models/GuildConfig";
 import { Command } from "types";
+import AppConfig from "../../AppConfig";
 
 const CommandBody = new SlashCommandBuilder()
     .setName("set-eventbonusmultiplier")
@@ -23,7 +24,7 @@ export const Cmd: Command = {
 
         const amount = Interaction.options.getNumber("amount", true);
 
-        const update = amount !== 1.5
+        const update = amount !== AppConfig.baseXPAmounts.EventBonusMultiplier
             ? { $set: { EventBonusMultiplier: amount } }
             : { $unset: { EventBonusMultiplier: "" } };
 

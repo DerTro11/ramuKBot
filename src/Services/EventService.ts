@@ -3,6 +3,7 @@ import EventSchema from "../MongoDB/models/GameNight"; // Import your event sche
 import { GnEventData, GnEventStatus } from "../types";
 import { addXPToUser } from "./xpService";
 import GuildConfig from "../MongoDB/models/GuildConfig";
+import AppConfig from "../AppConfig";
 
 export async function cancelEvent(EventId: string, client : Client) : Promise<void> {
     const EventData = await EventSchema.findById(EventId) as GnEventData;
@@ -49,32 +50,34 @@ export async function completeEvent(EventId: string, client : Client) : Promise<
 
     // Distribuit XP
     const guildConfig = await GuildConfig.findOne({ GuildID: storedEvent.GuildId });
-    const xpPerMin = guildConfig?.EventXPPerMinute || 10;
+    const xpPerMin = guildConfig?.EventXPPerMinute || AppConfig.baseXPAmounts.EventXPPerMinute;
 
-    const durationMin = (actualCompletion.getTime()  - storedEvent.ScheduledAt.getTime()) / 60000;
-    const minRequired = durationMin * 0.25;
-    const bonusThreshold = durationMin * 0.5;
-
-
-    for (const userId in storedEvent.Attendees) {
-        const minutes = storedEvent.Attendees[userId];
     
-        const isBonusEligible = 
-            storedEvent.ReactedUsers?.Users_Accept.includes(userId) &&
-            minutes >= bonusThreshold;
+    const durationMin = (actualCompletion.getTime()  - storedEvent.ScheduledAt.getTime()) / 60000;
+    const minRequired = durationMin * AppConfig.baseXPAmounts.PenaltyXPThreshold_Below;
+    const bonusThreshold = durationMin * AppConfig.baseXPAmounts.BonusXPThreshold_Above;
 
-        const xpRaw = minutes * xpPerMin;
-        const xp = isBonusEligible ? Math.floor(xpRaw * (guildConfig?.EventBonusMultiplier || 1.5)) : xpRaw;
+    if(xpPerMin > 0){
+        for (const userId in storedEvent.Attendees) {
+            const minutes = storedEvent.Attendees[userId];
+        
+            const isBonusEligible = 
+                storedEvent.ReactedUsers?.Users_Accept.includes(userId) &&
+                minutes >= bonusThreshold &&
+                ((guildConfig?.EventBonusMultiplier || AppConfig.baseXPAmounts.EventBonusMultiplier) > 1);
 
-        await addXPToUser(userId, storedEvent.GuildId, xp);
+            const xpRaw = minutes * xpPerMin;
+            const xp = isBonusEligible ? Math.floor(xpRaw * (guildConfig?.EventBonusMultiplier || AppConfig.baseXPAmounts.EventBonusMultiplier)) : xpRaw;
 
-        const user = await client.users.cache.get(userId);
-        user?.send(
-            `Hey 👋\nYou've just earned **${xp} XP** inside **${guild.name}** for attending a recent event.` +
-            (isBonusEligible ? `\n🎉 Thanks for showing up — you earned a **${guildConfig?.EventBonusMultiplier || 1.5}x bonus** for being there at least half the time!` : "")
-        );
+            await addXPToUser(userId, storedEvent.GuildId, xp);
+
+            const user = await client.users.cache.get(userId);
+            user?.send(
+                `Hey 👋\nYou've just earned **${xp} XP** inside **${guild.name}** for attending a recent event.` +
+                (isBonusEligible ? `\n🎉 Thanks for showing up — you earned a **${guildConfig?.EventBonusMultiplier || AppConfig.baseXPAmounts.EventBonusMultiplier}x bonus** for being there at least half the time!` : "")
+            );
+        }
     }
-
     // Penalty logic: check users who accepted but are missing or attended < 25%
    
 
@@ -83,17 +86,18 @@ export async function completeEvent(EventId: string, client : Client) : Promise<
         return mins < minRequired;
     });
 
-    if(!missedUsers) return;
+    if(missedUsers &&  (guildConfig?.PenaltyXPAmount || 1) > 0){
 
-    // Example penalty: Log, DM, remove XP, etc
-    for (const userId of missedUsers) {
-        //console.log(`Penalty candidate: ${userId} (attended <25%)`);
-        // Optional: remove XP, DM, or log in moderation log
-        const user = await client.users.cache.get(userId);
-        await addXPToUser(userId, guild.id,  (guildConfig?.PenaltyXPAmount && -guildConfig.PenaltyXPAmount) || -30)
-        user?.send(`Hey 👋\nWe are sorry to tell you that you've recieved a ${guildConfig?.PenaltyXPAmount || "30"} XP penalty for not attending a recent event, which you've marked yourself as accepted for.\nWhen clicking accept please make sure you attend at least 25% of the event.`);
+        // Example penalty: Log, DM, remove XP, etc
+        for (const userId of missedUsers) {
+            //console.log(`Penalty candidate: ${userId} (attended <25%)`);
+            // Optional: remove XP, DM, or log in moderation log
+            const user = await client.users.cache.get(userId);
+            const penaltyAmount = (guildConfig?.PenaltyXPAmount && -guildConfig.PenaltyXPAmount) || -AppConfig.baseXPAmounts.PenaltyXPAmount;
+            await addXPToUser(userId, guild.id,  -penaltyAmount)
+            user?.send(`Hey 👋\nWe are sorry to tell you that you've recieved a ${penaltyAmount} XP penalty for not attending a recent event, which you've marked yourself as accepted for.\nWhen clicking accept please make sure you attend at least 25% of the event.`);
+        }
     }
-
     // announcing event completion 
     if (storedEvent.ShoutMsgId && guildConfig?.ShoutChnlID) {
         const announcementChannel = guild.channels.cache.get(guildConfig.ShoutChnlID) as TextChannel;
@@ -102,8 +106,6 @@ export async function completeEvent(EventId: string, client : Client) : Promise<
             const shoutMsg = await announcementChannel.messages.fetch(storedEvent.ShoutMsgId);
 
             const hostMention = `<@${storedEvent.HostDCId}>`;
-            const durationMin = ( actualCompletion.getTime() - storedEvent.ScheduledAt.getTime()) / 60000;
-            const bonusThreshold = durationMin * 0.5;
 
             const attendeeEntries = (Object.entries(storedEvent.Attendees || {}) as [string, number][])
                 .map(([userId, mins]) => {

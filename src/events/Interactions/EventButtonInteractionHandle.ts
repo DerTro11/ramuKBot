@@ -4,6 +4,7 @@ import {startEvent, cancelEvent, completeEvent, updateEventInformation} from "..
 import EventSchema from "../../MongoDB/models/GameNight"; 
 import UserData from "../../MongoDB/models/UserData";
 import GuildConfig from "../../MongoDB/models/GuildConfig";
+import AppConfig from "../../AppConfig";
 
 
 const HostCmds = ["cancel", "edit", "mute", "end", "start"] // Buttons which can only be pressed by a host
@@ -243,13 +244,13 @@ async function GNhandleRSVP(interaction: ButtonInteraction, action: string, even
         if(!XPRecieved){
             await UserData.updateOne(
                 {UserId: userId},
-                { $inc: { [`ServerXP.${event.GuildId}`]: guildConfig?.ReactionXPAmount || 10 } },
+                { $inc: { [`ServerXP.${event.GuildId}`]: guildConfig?.ReactionXPAmount || AppConfig.baseXPAmounts.ReactionXPAmount } },
                 { upsert: true }
             );
         }
 
         await interaction.reply({
-            content: `✅ You have marked yourself as **${action.toUpperCase()}** for this event!${!XPRecieved ? `\n⭐ You've gained **${guildConfig?.ReactionXPAmount || 10} XP** for reacting!` : ""}`,
+            content: `✅ You have marked yourself as **${action.toUpperCase()}** for this event!${!XPRecieved && (guildConfig?.ReactionXPAmount || 1) > 0 ? `\n⭐ You've gained **${guildConfig?.ReactionXPAmount || 10} XP** for reacting!` : ""}`,
             flags: MessageFlags.Ephemeral
         });
 

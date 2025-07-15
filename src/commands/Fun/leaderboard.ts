@@ -1,7 +1,7 @@
 import { SlashCommandBuilder, EmbedBuilder } from "discord.js";
 import { Command } from "types";
 import UserData from "../../MongoDB/models/UserData";
-import { getRankFromXP } from "../../Services/xpService";
+import { getRankFromXP, getRankName } from "../../Services/xpService";
 
 const CommandBody = new SlashCommandBuilder()
     .setName("leaderboard")
@@ -42,6 +42,8 @@ export const Cmd: Command = {
         const leaderboard = await Promise.all(users.map(async (userDoc, index) => {
             const xp = userDoc.ServerXP[guildId];
             const rank = getRankFromXP(xp);
+            const rankName = await getRankName(rank.toString(), guildId);
+
 
             let username: string;
             try {
@@ -51,7 +53,7 @@ export const Cmd: Command = {
                 username = `Unknown (${userDoc.UserId})`;
             }
 
-            return `**#${skip + index + 1}** — <@${userDoc.UserId}> — ⭐ \`${xp} XP\` — 🎖️ Rank \`${rank}\``;
+            return `**#${skip + index + 1}** — <@${userDoc.UserId}> — ⭐ \`${xp} XP\` — 🎖️ Rank \`${rank}\` ${rankName ? `(${rankName})` : "" } `;
         }));
 
         const embed = new EmbedBuilder()

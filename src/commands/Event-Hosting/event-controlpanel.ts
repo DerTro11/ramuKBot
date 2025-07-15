@@ -5,9 +5,12 @@ import {
     ButtonStyle,
     MessageFlags,
     EmbedBuilder,
+    ButtonInteraction,
+    ComponentType,
 } from "discord.js";
 import { Command } from "types";
 import EventSchema from "../../MongoDB/models/GameNight";
+import { refreshControlPanel } from "../../Utils/ControlPanel";
 
 const CommandBody = new SlashCommandBuilder()
     .setName("event-controlpanel")
@@ -118,10 +121,17 @@ export const Cmd: Command = {
 
         const row2 = new ActionRowBuilder<ButtonBuilder>().addComponents(unmuteButton);
 
-        await Interaction.reply({
+        const reply = await Interaction.reply({
             embeds: [controlEmbed],
             components: [row1, row2],
             flags: MessageFlags.Ephemeral
+        });
+
+        const ConfirmCancleCollector = reply.createMessageComponentCollector({componentType: ComponentType.Button});
+        
+        ConfirmCancleCollector.on("collect", async function(buttonInteraction: ButtonInteraction){
+            if(!buttonInteraction.guild) return;
+            refreshControlPanel(EventId, buttonInteraction.message, buttonInteraction.guild)
         });
     }
 };
