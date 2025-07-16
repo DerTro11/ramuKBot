@@ -16,7 +16,7 @@ const CommandBody = new SlashCommandBuilder()
                     .setName("channel")
                     .setDescription("The voice channel to add")
                     .setRequired(true)
-                    .addChannelTypes(ChannelType.GuildVoice)
+                    .addChannelTypes([ChannelType.GuildVoice, ChannelType.GuildStageVoice])
             )
     )
     .addSubcommand(subcmd =>
@@ -28,7 +28,7 @@ const CommandBody = new SlashCommandBuilder()
                     .setName("channel")
                     .setDescription("The voice channel to remove")
                     .setRequired(true)
-                    .addChannelTypes(ChannelType.GuildVoice)
+                    .addChannelTypes([ChannelType.GuildVoice, ChannelType.GuildStageVoice])
             )
     ).addSubcommand(subcmd =>
         subcmd
