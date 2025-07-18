@@ -5,7 +5,7 @@ import GuildConfigs from "../MongoDB/models/GuildConfig";
 
 
 
-export default async function(appCommandInteraction: ChatInputCommandInteraction, buttonInteraction: ButtonInteraction) {
+export default async function(appCommandInteraction: ChatInputCommandInteraction, buttonInteraction: ButtonInteraction, isStage?: boolean) {
     if (!buttonInteraction.guild) {
         await buttonInteraction.reply({ content: "This command must be used in a server!", flags: MessageFlags.Ephemeral });
         return;
@@ -39,7 +39,7 @@ export default async function(appCommandInteraction: ChatInputCommandInteraction
             name: `Game Night - ${game}`,
             scheduledStartTime: eventDate,
             privacyLevel: 2, // Guild Only
-            entityType: 2, // Voice Event
+            entityType: (isStage && 1) || 2, // Voice Event
             description: additionalInfo,
             channel: eventVCChnl?.id // Replace with actual voice channel ID
         } as GuildScheduledEventCreateOptions);

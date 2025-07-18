@@ -47,6 +47,8 @@ export const Cmd: Command = {
         const eventVCChnl = Interaction.options.getChannel("channel", true);
         const guildConfig = await GuildConfigs.findOne({ GuildID: Interaction.guild?.id});
 
+        const isStage = eventVCChnl.type === ChannelType.GuildStageVoice;
+
         if(!guildConfig){
             await Interaction.reply({content: "Error: Could not find Guild config!", flags: MessageFlags.Ephemeral})
             return;
@@ -137,7 +139,7 @@ export const Cmd: Command = {
 
         ConfirmCancleCollector.on("collect", async function(buttonInteraction: ButtonInteraction){
             if (buttonInteraction.customId.endsWith("confirm_gamenight")) {
-                await handleGameNightConfirmation(Interaction ,buttonInteraction);
+                await handleGameNightConfirmation(Interaction ,buttonInteraction, isStage);
             } else if (buttonInteraction.customId.endsWith("cancel_gamenight")) {
                 await buttonInteraction.update({
                     content: "❌ **Game Night creation cancelled.**",
