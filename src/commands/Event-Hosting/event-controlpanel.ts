@@ -131,25 +131,6 @@ export const Cmd: Command = {
             components: [row1, row2],
             flags: MessageFlags.Ephemeral
         });
-
-        /*
-
-        Screw all this fucking shit. Not worth the fucking trouble. Really stupid ass shit fuck
-        FUCK FUCK FUCK THIS SHIT
-        
-        const ConfirmCancleCollector = reply.createMessageComponentCollector({componentType: ComponentType.Button});
-        
-        ConfirmCancleCollector.on("collect", async function(buttonInteraction: ButtonInteraction){
-            try {
-                setTimeout(async () => {
-                    if(!buttonInteraction.guild) return;
-                    await refreshControlPanel(EventId, buttonInteraction, buttonInteraction.guild)
-                }, 2000);
-            } catch (error) {
-                console.log(`Failed to refresh pannel: ${error}`)
-            }
-            
-        });*/
     }
 };
 
