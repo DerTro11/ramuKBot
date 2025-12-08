@@ -13,13 +13,7 @@ export async function cancelEvent(EventId: string, client : Client) : Promise<vo
     await EventSchema.updateOne({ _id: EventId }, {$set: {
         Status: GnEventStatus.Cancelled
     }});
-
-        
-
-    // Attempt to remove the Discord event
-    const guild = await client.guilds.fetch(EventData.GuildId);
-    const discordEvent = guild?.scheduledEvents.cache.get(EventData.ServerEventID);
-    if (discordEvent) await discordEvent.setStatus(GuildScheduledEventStatus.Canceled)
+    
     
     // Notify users who accepted
     const acceptedUsers = EventData.ReactedUsers?.Users_Accept || [];
@@ -28,6 +22,11 @@ export async function cancelEvent(EventId: string, client : Client) : Promise<vo
         const user = await client.users.fetch(userId).catch(() => null);
         if (user) user.send(`❌ The ${EventData.InfGame} Game Night event at the ${EventTimestamp} from <@${EventData.HostDCId}> has been cancelled.`);
     }
+
+    // Attempt to remove the Discord event
+    const guild = await client.guilds.fetch(EventData.GuildId);
+    const discordEvent = guild?.scheduledEvents.cache.get(EventData.ServerEventID);
+    if (discordEvent) await discordEvent.setStatus(GuildScheduledEventStatus.Canceled)
 }
 
 export async function completeEvent(EventId: string, client : Client) : Promise<void> {
