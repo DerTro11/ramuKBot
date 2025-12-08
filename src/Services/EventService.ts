@@ -45,8 +45,7 @@ export async function completeEvent(EventId: string, client : Client) : Promise<
     
     const guild = await client.guilds.fetch(storedEvent.GuildId);
     
-    const discordEvent = guild?.scheduledEvents.cache.get(storedEvent.ServerEventID);
-    if (discordEvent) await discordEvent.setStatus(GuildScheduledEventStatus.Completed);
+    
 
     // Distribuit XP
     const guildConfig = await GuildConfig.findOne({ GuildID: storedEvent.GuildId });
@@ -131,6 +130,11 @@ export async function completeEvent(EventId: string, client : Client) : Promise<
         }
     }
 
+
+    // Doing this as last step since it might break otherwise. 
+    // i.e. Erroring out and not distribuiting XP
+    const discordEvent = guild?.scheduledEvents.cache.get(storedEvent.ServerEventID);
+    if (discordEvent) await discordEvent.setStatus(GuildScheduledEventStatus.Completed);
 
 }
 
