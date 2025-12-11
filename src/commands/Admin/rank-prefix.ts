@@ -5,6 +5,7 @@ import { Command } from "types";
 const CommandBody = new SlashCommandBuilder()
     .setName("rank-prefix")
     .setDescription("Set or unset the prefix of a rank.")
+    .setContexts([0])
     .addSubcommand(sub => sub
         .setName("set")
         .setDescription("Set the prefix of a rank.")

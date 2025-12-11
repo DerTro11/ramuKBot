@@ -5,6 +5,7 @@ import { Command } from "types";
 const CommandBody = new SlashCommandBuilder()
     .setName("rank-name")
     .setDescription("Set or unset the name of a rank.")
+    .setContexts([0])
     .addSubcommand(sub => sub
         .setName("set")
         .setDescription("Set the name of a rank.")

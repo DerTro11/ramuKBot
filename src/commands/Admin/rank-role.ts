@@ -5,6 +5,7 @@ import { Command } from "types";
 const CommandBody = new SlashCommandBuilder()
     .setName("rank-role")
     .setDescription("Add or remove role rewards to a rank.")
+    .setContexts([0])
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addSubcommand(sub => sub
         .setName("add")
