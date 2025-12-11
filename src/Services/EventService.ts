@@ -206,6 +206,7 @@ export async function updateEventInformation(client: Client, eventId: string, up
     const serverEvent = guild.scheduledEvents.cache.get(storedEvent.ServerEventID);
     if (updates.newGame) await serverEvent?.setName(`Game Night - ${updates.newGame} 🎮`);
     if (updates.newDesc) await serverEvent?.setDescription(updates.newDesc);
+    if (updates.newDate) await serverEvent?.setScheduledStartTime(updates.newDate);
 
     // Update the original shout message if it exists
     const guildConfig = await GuildConfig.findOne({ GuildID: storedEvent.GuildId });
@@ -216,7 +217,7 @@ export async function updateEventInformation(client: Client, eventId: string, up
 
             const eventTimestamp = Math.floor((updates.newDate?.getTime() || storedEvent.ScheduledAt.getTime()) / 1000);
             const eventEndTimestamp = Math.floor((updates.newEndDate?.getTime() || storedEvent.ScheduledEndAt.getTime()) / 1000);
-            const eventDurationMin = Math.round((updates.newEndDate?.getTime() || storedEvent.ScheduledEndAt.getTime() - (updates.newDate?.getTime() || storedEvent.ScheduledAt.getTime())) / 60000);
+            const eventDurationMin = Math.round(( (updates.newEndDate?.getTime() || storedEvent.ScheduledEndAt.getTime()) - (updates.newDate?.getTime() || storedEvent.ScheduledAt.getTime())) / 60000);
             
             await message.edit({
                 content: `@everyone\n# 🎉 **Game Night Scheduled!** 🎉\n\n📅 **Date:** <t:${eventTimestamp}:F>\n⏱️ **Duration: ${eventDurationMin} Minutes**\n🎮 **Game:** ${updates.newGame || storedEvent.InfGame}\nℹ️ **Info:** ${updates.newDesc || storedEvent.InfAdditional}\n👑 **Host:** <@${storedEvent.HostDCId}>\n\n[Join Event](https://discord.com/events/${storedEvent.GuildId}/${storedEvent.ServerEventID})`
