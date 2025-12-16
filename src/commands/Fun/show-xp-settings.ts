@@ -28,8 +28,8 @@ export const Cmd: Command = {
         const bonusMulti = guildConfig?.EventBonusMultiplier ?? fallback.EventBonusMultiplier;
         const penaltyXP = guildConfig?.PenaltyXPAmount ?? fallback.PenaltyXPAmount;
 
-        const thresholdBonus = (fallback.BonusXPThreshold_Above * 100).toFixed(0);
-        const thresholdPenalty = (fallback.PenaltyXPThreshold_Below * 100).toFixed(0);
+        const thresholdBonus = ((guildConfig?.BonusXPThreshold_Above || fallback.BonusXPThreshold_Above) * 100).toFixed(0);
+        const thresholdPenalty = ((guildConfig?.PenaltyXPThreshold_Below || fallback.PenaltyXPThreshold_Below) * 100).toFixed(0);
 
         const embed = new EmbedBuilder()
             .setTitle("📊 XP Sources & Rewards in this Server")
