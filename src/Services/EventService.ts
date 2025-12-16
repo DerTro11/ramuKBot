@@ -52,8 +52,12 @@ export async function completeEvent(EventId: string, client : Client) : Promise<
 
     
     const durationMin = (actualCompletion.getTime()  - storedEvent.ScheduledAt.getTime()) / 60000;
-    const minRequired = durationMin * AppConfig.baseXPAmounts.PenaltyXPThreshold_Below;
-    const bonusThreshold = durationMin * AppConfig.baseXPAmounts.BonusXPThreshold_Above;
+
+    const penaltyThr = guildConfig?.PenaltyXPThreshold_Below || AppConfig.baseXPAmounts.PenaltyXPThreshold_Below;
+    const bonusThr = guildConfig?.BonusXPThreshold_Above || AppConfig.baseXPAmounts.BonusXPThreshold_Above;
+
+    const minRequired = durationMin * penaltyThr;
+    const bonusThreshold = durationMin * bonusThr;
 
     if(xpPerMin > 0){
         for (const userId in storedEvent.Attendees) {
@@ -72,7 +76,7 @@ export async function completeEvent(EventId: string, client : Client) : Promise<
             const user = await client.users.cache.get(userId);
             user?.send(
                 `Hey 👋\nYou've just earned **${xp} XP** inside **${guild.name}** for attending a recent event.` +
-                (isBonusEligible ? `\n🎉 Thanks for showing up — you earned a **${guildConfig?.EventBonusMultiplier || AppConfig.baseXPAmounts.EventBonusMultiplier}x bonus** for being there at least half the time!` : "")
+                (isBonusEligible ? `\n🎉 Thanks for showing up — you earned a **${guildConfig?.EventBonusMultiplier || AppConfig.baseXPAmounts.EventBonusMultiplier}x bonus** for being there at least ${bonusThr}% of the time!` : "")
             );
         }
     }
@@ -93,7 +97,7 @@ export async function completeEvent(EventId: string, client : Client) : Promise<
             const user = await client.users.cache.get(userId);
             const penaltyAmount = (guildConfig?.PenaltyXPAmount && -guildConfig.PenaltyXPAmount) || -AppConfig.baseXPAmounts.PenaltyXPAmount;
             await addXPToUser(userId, guild.id,  -penaltyAmount)
-            user?.send(`Hey 👋\nWe are sorry to tell you that you've recieved a ${penaltyAmount} XP penalty for not attending a recent event, which you've marked yourself as accepted for.\nWhen clicking accept please make sure you attend at least 25% of the event.`);
+            user?.send(`Hey 👋\nWe are sorry to tell you that you've recieved a ${penaltyAmount} XP penalty for not attending a recent event, which you've marked yourself as accepted for.\nWhen clicking accept please make sure you attend at least ${penaltyThr}% of the event.`);
         }
     }
     // announcing event completion 
